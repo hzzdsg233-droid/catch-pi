@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Four Ways to Catch π</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&family=Noto+Serif+SC:wght@300;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout idea: an editorial long-read in three chapters. Each chapter = giant outlined numeral + headline,
+     a story row (text | video with proportional timeline), a full-width lab (stage | control rail),
+     and a "problem sheet" quiz. Single dark theme on purpose: it matches the Manim videos, whose colours we reuse. */
+  --bg: #0f1113;
+  --bg-2: #15181b;
+  --bg-3: #1c2024;
+  --hair: #2a2f35;
+  --ink: #efebe1;
+  --muted: #959ca5;
+  --faint: #5d646c;
+  --yellow: #F4D345;
+  --blue: #58C4DD;
+  --red: #FC6255;
+  --green: #83C167;
+  --purple: #B189C6;
+  --display: "Fraunces", "Noto Serif SC", "Songti SC", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", "Noto Sans SC", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 16px; line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+[hidden] { display: none !important; }
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--display); font-weight: 300; margin: 0; line-height: 1.02; text-wrap: balance; }
+p { margin: 0; }
+em { font-style: italic; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.mono { font-family: var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px); }
+.label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- top bar ---------- */
+.bar { position: sticky; top: 0; z-index: 20; background: rgba(15, 17, 19, 0.82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--hair); }
+.bar-inner { display: flex; align-items: center; gap: 16px; height: 54px; }
+.brand { font-family: var(--display); font-style: italic; font-size: 21px; text-decoration: none; white-space: nowrap; }
+.brand b { font-weight: 500; color: var(--yellow); }
+.toc { display: flex; gap: 4px; margin-left: auto; overflow-x: auto; }
+.toc a { display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 14px; color: var(--muted); padding: 6px 12px; border-radius: 999px; white-space: nowrap; transition: color .2s, background .2s; }
+.toc a:hover { color: var(--ink); background: var(--bg-3); }
+.toc .n { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.toc .solved { font-family: var(--mono); font-size: 11px; color: var(--bg); background: var(--c); border-radius: 999px; padding: 0 7px; min-width: 20px; text-align: center; }
+.langbtn { flex: none; font-family: var(--mono); font-size: 13px; padding: 5px 12px; border-color: var(--faint); }
+.langbtn:hover { border-color: var(--yellow); color: var(--yellow); }
+.progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 0; background: var(--yellow); }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: center; padding: clamp(40px, 7vw, 96px) 0 clamp(32px, 5vw, 64px); }
+.hero .label { margin-bottom: 22px; }
+.hero h1 { font-size: clamp(52px, 8.6vw, 124px); letter-spacing: -0.025em; font-variation-settings: "opsz" 144; }
+.hero h1 .pi { font-style: italic; font-weight: 500; color: var(--yellow); }
+.hero h1 .soft { display: block; margin-top: 14px; font-size: 0.36em; letter-spacing: 0; font-style: italic; color: var(--muted); }
+.hero .lede { margin-top: 28px; font-size: clamp(17px, 1.5vw, 19px); color: var(--muted); max-width: 46ch; }
+.hero .lede strong { color: var(--ink); font-weight: 500; }
+.ring-wrap { position: relative; }
+.ring-wrap canvas { width: 100%; display: block; }
+.ring-cap { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 12px; color: var(--muted); border-top: 1px solid var(--hair); padding-top: 10px; margin-top: 6px; }
+.ring-cap b { color: var(--yellow); font-weight: 500; }
+
+/* chapter index under hero */
+.index { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+.index a { --c: var(--blue); display: grid; gap: 6px; padding: 22px 24px 24px; text-decoration: none; border-right: 1px solid var(--hair); position: relative; transition: background .25s; }
+.index a:last-child { border-right: 0; }
+.index a::before { content: ""; position: absolute; left: 0; top: -1px; height: 2px; width: 0; background: var(--c); transition: width .35s; }
+.index a:hover { background: var(--bg-2); }
+.index a:hover::before { width: 100%; }
+.index .num { font-family: var(--mono); font-size: 12px; color: var(--c); }
+.index .t { font-family: var(--display); font-size: 26px; line-height: 1.1; }
+.index .d { font-size: 14px; color: var(--muted); }
+
+/* toolkit strip */
+.toolkit { padding: clamp(40px, 6vw, 72px) 0; display: grid; grid-template-columns: 220px 1fr; gap: 32px; align-items: start; }
+.toolkit h2 { font-size: 30px; font-style: italic; }
+.toolkit h2 + p { margin-top: 10px; font-size: 14px; color: var(--muted); }
+.tools { display: grid; grid-template-columns: repeat(4, 1fr); }
+.tool { padding: 0 20px; border-left: 1px solid var(--hair); }
+.tool .f { font-family: var(--display); font-size: 26px; font-style: italic; color: var(--yellow); white-space: nowrap; }
+.tool p { font-size: 14px; color: var(--muted); margin-top: 8px; }
+
+/* ---------- chapter ---------- */
+.chapter { --acc: var(--blue); padding: clamp(56px, 8vw, 112px) 0 clamp(40px, 6vw, 72px); border-top: 1px solid var(--hair); scroll-margin-top: 54px; }
+.chapter.mc { --acc: var(--green); }
+.chapter.bf { --acc: var(--red); }
+.chapter.lb { --acc: var(--purple); }
+.ch-head { display: grid; grid-template-columns: auto 1fr; gap: clamp(16px, 3vw, 40px); align-items: end; }
+.ch-num { font-family: var(--display); font-weight: 300; font-size: clamp(110px, 17vw, 230px); line-height: 0.72; color: transparent; -webkit-text-stroke: 1.2px var(--acc); letter-spacing: -0.04em; font-variation-settings: "opsz" 144; user-select: none; }
+.ch-head .label { color: var(--acc); margin-bottom: 14px; }
+.ch-head h2 { font-size: clamp(38px, 5.4vw, 72px); letter-spacing: -0.02em; font-variation-settings: "opsz" 144; }
+.ch-head h2 em { color: var(--acc); }
+
+.story { display: grid; grid-template-columns: 5fr 7fr; gap: clamp(28px, 4vw, 64px); margin-top: clamp(36px, 5vw, 64px); align-items: start; }
+.chapter.mc .story, .chapter.lb .story { grid-template-columns: 7fr 5fr; }
+.chapter.mc .story .text, .chapter.lb .story .text { order: 2; }
+.text .thesis { font-family: var(--display); font-size: clamp(22px, 2.2vw, 28px); line-height: 1.3; font-weight: 300; }
+.text .thesis em { color: var(--acc); }
+.text .body { margin-top: 18px; color: var(--muted); max-width: 58ch; }
+.formula { margin-top: 28px; padding: 18px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-family: var(--display); font-size: clamp(22px, 2.4vw, 30px); font-style: italic; }
+.formula .label { font-style: normal; flex-basis: 100%; }
+.frac { display: inline-grid; text-align: center; font-size: 0.72em; line-height: 1.2; vertical-align: middle; }
+.frac > span:first-child { border-bottom: 1.5px solid currentColor; padding: 0 4px 2px; }
+.frac > span:last-child { padding-top: 2px; }
+.after { margin-top: 22px; font-size: 14px; color: var(--muted); padding-left: 16px; border-left: 2px solid var(--acc); }
+.after b { color: var(--ink); font-weight: 500; }
+
+/* video */
+.video { display: grid; gap: 14px; }
+.frame { aspect-ratio: 16 / 9; background: #000; border-radius: 4px; overflow: hidden; position: relative; display: grid; place-items: center; box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+.frame video { width: 100%; height: 100%; display: block; }
+.frame .ph { text-align: center; }
+.frame .ph .play { width: 72px; height: 72px; border-radius: 50%; border: 1.5px solid var(--acc); display: grid; place-items: center; margin: 0 auto 14px; transition: transform .3s; }
+.frame:hover .play { transform: scale(1.06); }
+.frame .ph .play::after { content: ""; border-left: 18px solid var(--acc); border-top: 11px solid transparent; border-bottom: 11px solid transparent; margin-left: 5px; }
+.frame .ph .t { font-family: var(--display); font-size: 24px; font-style: italic; }
+.frame .ph .s { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 4px; }
+.frame .corner { position: absolute; top: 12px; left: 14px; font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; gap: 3px; }
+.timeline li { flex: var(--d) 1 0; min-width: 0; }
+.timeline button { all: unset; display: block; width: 100%; cursor: pointer; border-radius: 3px; }
+.timeline button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.timeline button::before { content: ""; display: block; height: 3px; background: var(--hair); border-radius: 2px; margin-bottom: 8px; transition: background .2s; }
+.timeline button:hover::before, .timeline li.now button::before { background: var(--acc); }
+.timeline li.now .nm { color: var(--ink); }
+.timeline .ts { font-family: var(--mono); font-size: 11px; color: var(--acc); display: block; }
+.timeline .nm { font-size: 12px; color: var(--muted); display: block; line-height: 1.35; }
+.video-meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.file-btn { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--ink); border-bottom: 1px solid var(--faint); padding-bottom: 1px; }
+.file-btn:hover { border-color: var(--acc); }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.file-btn:focus-within { outline: 2px solid var(--yellow); outline-offset: 3px; }
+
+/* lab */
+.lab { margin-top: clamp(48px, 6vw, 80px); display: grid; grid-template-columns: 7fr 5fr; background: var(--bg-2); border-radius: 6px; overflow: hidden; }
+.stage { position: relative; background: #0b0c0e; border-right: 1px solid var(--hair); }
+.stage canvas { width: 100%; display: block; }
+.stage .tagline { position: absolute; left: 18px; top: 16px; display: flex; gap: 10px; align-items: center; }
+.stage .tagline .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc) 25%, transparent); }
+.rail { padding: clamp(20px, 2.4vw, 32px); display: grid; gap: 22px; align-content: start; }
+.rail h3 { font-size: 30px; font-style: italic; }
+.rail h3 + p { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.big { font-family: var(--mono); font-size: clamp(34px, 3.6vw, 48px); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.big .ok { color: var(--yellow); }
+.big .no { color: var(--faint); }
+.big-cap { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.bounds { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: clamp(22px, 2.3vw, 30px); font-variant-numeric: tabular-nums; }
+.bounds .lo { color: var(--blue); }
+.bounds .hi { color: var(--red); }
+.bounds .pi { font-family: var(--display); font-style: italic; color: var(--yellow); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+.stat { padding: 10px 0 10px 14px; border-left: 1px solid var(--hair); }
+.stat:first-child { border-left: 0; padding-left: 0; }
+.stat .l { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.stat .v { font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat.g .v { color: var(--green); } .stat.r .v { color: var(--red); }
+.ctrl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: baseline; }
+.ctrl label { font-size: 14px; }
+.ctrl output { font-family: var(--mono); font-size: 15px; color: var(--acc); font-variant-numeric: tabular-nums; }
+input[type=range] { grid-column: 1 / -1; width: 100%; height: 22px; background: transparent; -webkit-appearance: none; appearance: none; }
+input[type=range]::-webkit-slider-runnable-track { height: 3px; background: linear-gradient(to right, var(--acc) var(--p, 50%), var(--hair) var(--p, 50%)); border-radius: 2px; }
+input[type=range]::-moz-range-track { height: 3px; background: var(--hair); border-radius: 2px; }
+input[type=range]::-moz-range-progress { height: 3px; background: var(--acc); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: 4px solid var(--acc); margin-top: -7.5px; cursor: grab; transition: transform .15s; }
+input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); border: 4px solid var(--acc); cursor: grab; }
+input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); cursor: grabbing; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+button { font: 500 14px var(--body); color: var(--ink); background: transparent; border: 1px solid var(--hair); border-radius: 999px; padding: 7px 16px; cursor: pointer; transition: border-color .2s, background .2s, color .2s; }
+button:hover { border-color: var(--acc); }
+button.primary { background: var(--acc); color: #0b0c0e; border-color: var(--acc); }
+button.primary:hover { filter: brightness(1.08); }
+button.chipbtn { font-family: var(--mono); font-size: 13px; padding: 5px 12px; }
+button.chipbtn.on { background: var(--bg-3); border-color: var(--acc); color: var(--acc); }
+button[aria-pressed="true"] { border-color: var(--acc); color: var(--acc); }
+button:disabled { opacity: .45; cursor: default; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; }
+.check input { accent-color: var(--acc); width: 16px; height: 16px; }
+.interval .track { position: relative; height: 22px; border-bottom: 1px solid var(--faint); }
+.interval .seg { position: absolute; bottom: -3px; height: 6px; background: var(--acc); border-radius: 3px; transition: left .4s cubic-bezier(.2,.8,.2,1), width .4s cubic-bezier(.2,.8,.2,1); }
+.interval .pimark { position: absolute; bottom: -8px; width: 1.5px; height: 16px; background: var(--yellow); }
+.interval .pimark::after { content: "π"; position: absolute; top: -20px; left: -4px; font-family: var(--display); font-style: italic; color: var(--yellow); }
+.interval .ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--faint); margin-top: 6px; }
+.chart-wrap .label { margin-bottom: 8px; }
+.chart-wrap canvas { width: 100%; display: block; }
+
+/* quiz = problem sheet */
+.sheet { margin-top: clamp(40px, 5vw, 64px); display: grid; grid-template-columns: 220px 1fr; gap: 32px; }
+.sheet-side .label { color: var(--acc); }
+.sheet-side .pno { font-family: var(--display); font-size: 64px; line-height: 1; margin-top: 8px; font-variant-numeric: tabular-nums; font-variation-settings: "opsz" 144; }
+.sheet-side .score { margin-top: 14px; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.sheet-side .score b { font-family: var(--mono); color: var(--ink); font-weight: 500; }
+.sheet-main { border-top: 1px solid var(--hair); padding-top: 22px; }
+.q-text { font-family: var(--display); font-size: clamp(21px, 2vw, 26px); line-height: 1.35; font-weight: 300; max-width: 40ch; }
+.q-text b { font-weight: 500; color: var(--acc); }
+.q-options { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 8px; max-width: 720px; }
+.q-options button { width: 100%; display: grid; grid-template-columns: 34px 1fr; align-items: center; text-align: left; border-radius: 6px; padding: 12px 16px; font-weight: 400; font-size: 15px; background: var(--bg-2); border-color: transparent; }
+.q-options button .key { font-family: var(--mono); font-size: 12px; color: var(--muted); width: 22px; height: 22px; border: 1px solid var(--hair); border-radius: 4px; display: grid; place-items: center; }
+.q-options button:hover:not(:disabled) { border-color: var(--acc); background: var(--bg-3); }
+.q-options button.wrong { color: var(--faint); text-decoration: line-through; background: transparent; border-color: rgba(252, 98, 85, .35); }
+.q-options button.right { border-color: var(--green); background: rgba(131, 193, 103, .12); }
+.q-options button.right .key { border-color: var(--green); color: var(--green); }
+.q-num { margin-top: 22px; display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+.q-num input { font: 500 28px var(--mono); color: var(--ink); background: transparent; border: 0; border-bottom: 2px solid var(--hair); padding: 4px 2px; width: 200px; transition: border-color .2s; }
+.q-num input:focus { outline: none; border-color: var(--acc); }
+.q-num input::placeholder { color: var(--faint); }
+.q-feedback { margin-top: 18px; max-width: 720px; }
+.q-feedback .box { padding: 14px 18px; border-radius: 6px; display: grid; gap: 8px; font-size: 15px; animation: rise .3s ease-out; }
+@keyframes rise { from { transform: translateY(6px); opacity: .4; } to { transform: none; opacity: 1; } }
+.q-feedback .bad { background: rgba(252, 98, 85, .08); box-shadow: inset 3px 0 0 var(--red); }
+.q-feedback .good { background: rgba(131, 193, 103, .09); box-shadow: inset 3px 0 0 var(--green); }
+.q-feedback .info { background: rgba(244, 211, 69, .07); box-shadow: inset 3px 0 0 var(--yellow); }
+.q-feedback strong { font-weight: 600; }
+.q-feedback .act { justify-self: start; }
+.q-actions { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.q-count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.q-count .bar-t { display: inline-block; width: 60px; height: 2px; background: var(--hair); vertical-align: middle; margin-left: 8px; position: relative; overflow: hidden; }
+.q-count .bar-t i { position: absolute; inset: 0; background: var(--green); transform-origin: left; animation: drain 4s linear forwards; }
+@keyframes drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Chinese has no true italics: keep CJK text upright, emphasis by colour only */
+html[lang="zh-CN"] em, html[lang="zh-CN"] .rail h3, html[lang="zh-CN"] .toolkit h2, html[lang="zh-CN"] .takeaway h3,
+html[lang="zh-CN"] .big-f, html[lang="zh-CN"] .hero h1 .soft, html[lang="zh-CN"] .brand { font-style: normal; }
+
+/* ---------- 05 race ---------- */
+.chapter.rc { --acc: var(--yellow); }
+.laws { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--hair); border-radius: 6px; overflow: hidden; }
+.law { background: var(--bg-2); padding: 18px 20px; display: grid; gap: 4px; }
+.law .nm { font-size: 14px; color: var(--c); font-weight: 500; }
+.law .eq { font-family: var(--display); font-style: italic; font-size: clamp(26px, 2.6vw, 34px); line-height: 1.1; }
+.law .eq .frac { font-size: 0.7em; }
+.law .st { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.lanes { display: grid; gap: 10px; }
+.lane { display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 6px; background: var(--bg-3); border-left: 3px solid var(--c); transition: background .3s; }
+.lane.lead { background: color-mix(in srgb, var(--c) 14%, var(--bg-3)); }
+.lane .rank { font-family: var(--display); font-size: 26px; line-height: 1; color: var(--c); text-align: center; font-variant-numeric: tabular-nums; }
+.lane .ln { font-size: 13px; color: var(--muted); }
+.lane .ln b { color: var(--ink); font-weight: 500; }
+.lane .lv { font-family: var(--mono); font-size: 22px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.lane .lv .ok { color: var(--yellow); } .lane .lv .no { color: var(--faint); }
+.digbar { display: grid; grid-template-columns: repeat(7, 7px); gap: 3px; }
+.digbar i { height: 18px; border-radius: 2px; background: var(--hair); transition: background .25s; }
+.digbar i.on { background: var(--c); }
+.race-steps { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.race-steps .big { font-size: clamp(30px, 3vw, 40px); }
+.tablewrap { margin-top: clamp(40px, 5vw, 64px); overflow-x: auto; }
+table.cmp { width: 100%; border-collapse: collapse; min-width: 860px; font-size: 14px; }
+.cmp th { text-align: left; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 10px 14px; border-bottom: 1px solid var(--hair); }
+.cmp td { padding: 14px; border-bottom: 1px solid var(--hair); vertical-align: top; color: var(--muted); }
+.cmp td:first-child { color: var(--ink); font-weight: 500; box-shadow: inset 3px 0 0 var(--c); padding-left: 16px; white-space: nowrap; }
+.cmp td.num { font-family: var(--mono); color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cmp td.num .ok { color: var(--yellow); }
+.cmp tr:hover td { background: var(--bg-2); }
+.takeaway { margin-top: clamp(32px, 4vw, 48px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.takeaway div { border-top: 2px solid var(--acc); padding-top: 14px; }
+.takeaway h3 { font-size: 22px; font-style: italic; margin-bottom: 8px; }
+.takeaway p { font-size: 14px; color: var(--muted); }
+@media (max-width: 980px) { .takeaway { grid-template-columns: 1fr; gap: 20px; } }
+@media (max-width: 520px) { .laws { grid-template-columns: 1fr; } }
+
+footer { border-top: 1px solid var(--hair); padding: 48px 0 64px; }
+footer .wrap { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; }
+footer .big-f { font-family: var(--display); font-size: clamp(32px, 4vw, 52px); font-style: italic; font-weight: 300; line-height: 1.1; }
+footer .big-f b { color: var(--yellow); font-weight: 500; }
+footer .cred { font-size: 13px; color: var(--muted); text-align: right; }
+
+@media (max-width: 980px) {
+  .hero, .story, .chapter.mc .story, .chapter.lb .story, .lab, .sheet, .toolkit { grid-template-columns: 1fr; }
+  .chapter.mc .story .text, .chapter.lb .story .text { order: 0; }
+  .index { grid-template-columns: repeat(2, 1fr); }
+  .index a:nth-child(2) { border-right: 0; }
+  .index a:nth-child(-n+2) { border-bottom: 1px solid var(--hair); }
+  .stage { border-right: 0; border-bottom: 1px solid var(--hair); }
+  .tools { grid-template-columns: repeat(2, 1fr); row-gap: 24px; }
+  .sheet-side { display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap; }
+  .sheet-side .pno { font-size: 44px; }
+}
+@media (max-width: 640px) {
+  .index { grid-template-columns: 1fr; }
+  .index a { border-right: 0; border-bottom: 1px solid var(--hair); }
+  .tools { grid-template-columns: 1fr; }
+  .tool { border-left: 0; border-top: 1px solid var(--hair); padding: 14px 0 0; }
+  .timeline .nm { display: none; }
+  .toc .t { display: none; }
+  footer .wrap { grid-template-columns: 1fr; }
+  footer .cred { text-align: left; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="wrap bar-inner">
+    <a class="brand" href="#top">Catch <b>π</b></a>
+    <nav class="toc" aria-label="Chapters">
+      <a href="#archimedes" style="--c:var(--blue)"><span class="n">01</span><span class="t">Polygons</span><span class="solved" id="nav-arch" title="Problems solved">0</span></a>
+      <a href="#monte-carlo" style="--c:var(--green)"><span class="n">02</span><span class="t">Random dots</span><span class="solved" id="nav-mc" title="Problems solved">0</span></a>
+      <a href="#buffon" style="--c:var(--red)"><span class="n">03</span><span class="t">Needles</span><span class="solved" id="nav-bf" title="Problems solved">0</span></a>
+      <a href="#leibniz" style="--c:var(--purple)"><span class="n">04</span><span class="t">Fractions</span><span class="solved" id="nav-lb" title="Problems solved">0</span></a>
+      <a href="#race" style="--c:var(--yellow)"><span class="n">05</span><span class="t">The race</span><span class="solved" id="nav-rc" title="Problems solved">0</span></a>
+    </nav>
+    <button type="button" class="langbtn" id="langbtn" aria-label="切换到中文">中文</button>
+  </div>
+  <div class="progress" id="progress"></div>
+</div>
+
+<main id="top">
+  <div class="wrap">
+    <header class="hero">
+      <div>
+        <p class="label">A Manim project · Team B</p>
+        <h1>Four ways<br>to catch <span class="pi">π</span><span class="soft">without measuring a curve</span></h1>
+        <p class="lede">π is the length around a circle of diameter 1. No ruler can measure a curve exactly, so mathematicians trapped π instead: <strong>between polygons</strong>, <strong>with random dots</strong>, <strong>with falling needles</strong>, and <strong>with an endless sum of fractions</strong>. Watch each short film, then try the method yourself.</p>
+      </div>
+      <figure class="ring-wrap" style="margin:0">
+        <canvas id="hero-canvas" aria-label="A polygon inside a circle gains sides; the digits of π light up around the circle as they are pinned down"></canvas>
+        <figcaption class="ring-cap"><span id="hero-n">n = 6 sides</span><span><span class="i-caught">digits caught:</span> <b id="hero-v">3</b></span></figcaption>
+      </figure>
+    </header>
+
+    <nav class="index" aria-label="Chapter index">
+      <a href="#archimedes" style="--c:var(--blue)"><span class="num">01 · c. 250 BC</span><span class="t">Trap it between polygons</span><span class="d">Archimedes squeezes π with 96-sided shapes.</span></a>
+      <a href="#monte-carlo" style="--c:var(--green)"><span class="num">02 · 1940s</span><span class="t">Throw random dots</span><span class="d">Count hits inside a circle, and π emerges.</span></a>
+      <a href="#buffon" style="--c:var(--red)"><span class="num">03 · 1777</span><span class="t">Drop needles on a floor</span><span class="d">Buffon finds π in a game of chance.</span></a>
+      <a href="#leibniz" style="--c:var(--purple)"><span class="num">04 · c. 1400 / 1674</span><span class="t">Add up fractions</span><span class="d">1 − 1/3 + 1/5 − … creeps towards π/4.</span></a>
+    </nav>
+
+    <section class="toolkit" aria-labelledby="tk-h">
+      <div><h2 id="tk-h">Before you watch</h2><p>Four facts the films rely on.</p></div>
+      <div class="tools">
+        <div class="tool"><div class="f">C = πd</div><p>Circumference is π times the diameter. With d = 1, the circumference is π itself.</p></div>
+        <div class="tool"><div class="f">A = πr²</div><p>The area of a circle. With r = 1, the area is π.</p></div>
+        <div class="tool"><div class="f">P = part ÷ whole</div><p>For a random point, a probability is a ratio of areas.</p></div>
+        <div class="tool"><div class="f">sin 30° = ½</div><p>Sine and tangent of 30° and 60°, used in film one.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= 01 ARCHIMEDES ================= -->
+  <section class="chapter" id="archimedes" aria-labelledby="arch-h">
+    <div class="wrap">
+      <header class="ch-head">
+        <div class="ch-num" aria-hidden="true">01</div>
+        <div><p class="label">c. 250 BC · Archimedes of Syracuse</p><h2 id="arch-h">Trap π between <em>two polygons</em></h2></div>
+      </header>
+
+      <div class="story">
+        <div class="text">
+          <p class="thesis">A shape inside the circle is <em>too short</em>. A shape outside is <em>too long</em>. π has to sit in between.</p>
+          <p class="body">Archimedes started with hexagons, then kept doubling the number of sides: 12, 24, 48, 96. Each step squeezes the gap. With 96 sides he proved π lies between 3.1408 and 3.1429.</p>
+          <div class="formula"><span class="label">The idea in one line</span><span style="color:var(--blue)">inner</span> &lt; <span style="color:var(--yellow)">π</span> &lt; <span style="color:var(--red)">outer</span></div>
+          <p class="after"><b>After watching:</b> Liu Hui (AD 263) went to 3072 sides for 3.1416, and Zu Chongzhi pinned π between 3.1415926 and 3.1415927.</p>
+        </div>
+        <div class="video">
+                    <div class="frame" id="arch-video"><video controls preload="metadata" playsinline poster="videos/archimedes.jpg" src="videos/archimedes.mp4" data-en="videos/archimedes.mp4" data-zh="videos/archimedes_zh.mp4" aria-label="Archimedes' Method video"></video></div>
+          <ol class="timeline" aria-label="Film chapters">
+            <li style="--d:22"><button type="button" data-t="0"><span class="ts">0:00</span><span class="nm">What is π?</span></button></li>
+            <li style="--d:18"><button type="button" data-t="22"><span class="ts">0:22</span><span class="nm">The squeeze</span></button></li>
+            <li style="--d:22"><button type="button" data-t="40"><span class="ts">0:40</span><span class="nm">π &gt; 3</span></button></li>
+            <li style="--d:22"><button type="button" data-t="62"><span class="ts">1:02</span><span class="nm">π &lt; 3.464</span></button></li>
+            <li style="--d:24"><button type="button" data-t="84"><span class="ts">1:24</span><span class="nm">Doubling to 96</span></button></li>
+            <li style="--d:16"><button type="button" data-t="108"><span class="ts">1:48</span><span class="nm">Result</span></button></li>
+            <li style="--d:30"><button type="button" data-t="124"><span class="ts">2:04</span><span class="nm">Liu Hui, Zu Chongzhi</span></button></li>
+          </ol>
+          <div class="video-meta"><span>Narrated, with subtitles · 2:34</span><span class="i-jump">Click a chapter to jump there</span></div>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="stage">
+          <div class="tagline"><span class="dot"></span><span class="label">Lab · diameter = 1</span></div>
+          <canvas id="arch-canvas" aria-label="Circle with inscribed and circumscribed polygons"></canvas>
+        </div>
+        <div class="rail">
+          <div><h3>Cut the circle</h3><p>Drag the slider and watch the two polygons close in on the circle.</p></div>
+          <div>
+            <div class="bounds"><span class="lo" id="arch-lo">3.0000</span><span>&lt;</span><span class="pi">π</span><span>&lt;</span><span class="hi" id="arch-hi">3.4641</span></div>
+            <p class="big-cap"><span class="i-agree">Both bounds agree on</span> <b class="mono" style="color:var(--yellow)" id="arch-digits">3</b> · <span class="i-gap">gap</span> <span class="mono" id="arch-gap">0.4641</span></p>
+          </div>
+          <div class="interval" aria-hidden="true">
+            <div class="track"><span class="seg" id="arch-seg"></span><span class="pimark" id="arch-pi"></span></div>
+            <div class="ticks"><span>2.9</span><span>3.0</span><span>3.1</span><span>3.2</span><span>3.3</span><span>3.4</span><span>3.5</span><span>3.6</span></div>
+          </div>
+          <div class="ctrl">
+            <label for="arch-n">Number of sides</label>
+            <output id="arch-n-out" for="arch-n">6</output>
+            <input type="range" id="arch-n" min="3" max="96" step="1" value="6">
+          </div>
+          <div class="btns" role="group" aria-label="Archimedes' steps">
+            <button type="button" class="chipbtn" data-n="6">6</button>
+            <button type="button" class="chipbtn" data-n="12">12</button>
+            <button type="button" class="chipbtn" data-n="24">24</button>
+            <button type="button" class="chipbtn" data-n="48">48</button>
+            <button type="button" class="chipbtn" data-n="96">96</button>
+          </div>
+          <div class="btns">
+            <button type="button" class="primary" id="arch-play">Play Archimedes' path</button>
+            <label class="check"><input type="checkbox" id="arch-zoom"> <span>Zoom into the edge</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="quiz-arch">
+        <div class="sheet-side">
+          <p class="label">Problem sheet</p>
+          <div class="pno">No.&nbsp;<span class="q-no">1</span></div>
+          <div class="score"><span><span class="i-solved">Solved</span> <b class="q-score">0</b></span><span><span class="i-streak">Streak</span> <b class="q-streak">0</b></span></div>
+        </div>
+        <div class="sheet-main">
+          <p class="q-text"></p>
+          <div class="q-options"></div>
+          <form class="q-num" hidden><label class="sr-only" for="ans-arch">Your answer</label><input id="ans-arch" type="text" inputmode="decimal" autocomplete="off" placeholder="3.14"><button type="submit" class="primary">Check</button></form>
+          <div class="q-feedback" role="status" aria-live="polite"></div>
+          <div class="q-actions"><button type="button" class="q-reveal" hidden>Show answer</button><button type="button" class="q-next primary" hidden>Next problem</button><span class="q-count"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 02 MONTE CARLO ================= -->
+  <section class="chapter mc" id="monte-carlo" aria-labelledby="mc-h">
+    <div class="wrap">
+      <header class="ch-head">
+        <div class="ch-num" aria-hidden="true">02</div>
+        <div><p class="label">1940s · Los Alamos</p><h2 id="mc-h">Throw <em>random dots</em> at a square</h2></div>
+      </header>
+
+      <div class="story">
+        <div class="text">
+          <p class="thesis">A circle of radius 1 covers <em>π⁄4</em> of the square around it. Random dots find that fraction for you.</p>
+          <p class="body">Throw dots anywhere in the square and count how many land inside the circle. Four times that fraction heads towards π. It works for any shape, but it is slow: each extra digit costs a hundred times more dots.</p>
+          <div class="formula"><span class="label">The idea in one line</span><span style="color:var(--yellow)">π</span> ≈ 4 × <span class="frac"><span style="color:var(--green)">inside</span><span>all dots</span></span></div>
+          <p class="after"><b>After watching:</b> the typical error is about 1.64 ÷ √n. Throw 100 dots a few times and see how much the answer jumps.</p>
+        </div>
+        <div class="video">
+          <div class="frame" id="mc-video"><video controls preload="metadata" playsinline poster="videos/monte_carlo.jpg" src="videos/monte_carlo.mp4" data-en="videos/monte_carlo.mp4" data-zh="videos/monte_carlo_zh.mp4" aria-label="Monte Carlo π video"></video></div>
+          <ol class="timeline" aria-label="Film chapters">
+            <li style="--d:14"><button type="button" data-t="0"><span class="ts">0:00</span><span class="nm">Randomness?</span></button></li>
+            <li style="--d:22"><button type="button" data-t="14"><span class="ts">0:14</span><span class="nm">P = π⁄4</span></button></li>
+            <li style="--d:26"><button type="button" data-t="36"><span class="ts">0:36</span><span class="nm">x² + y² ≤ 1</span></button></li>
+            <li style="--d:29"><button type="button" data-t="62"><span class="ts">1:02</span><span class="nm">2000 dots</span></button></li>
+            <li style="--d:27"><button type="button" data-t="91"><span class="ts">1:31</span><span class="nm">Accuracy, any shape</span></button></li>
+            <li style="--d:20"><button type="button" data-t="118"><span class="ts">1:58</span><span class="nm">Summary</span></button></li>
+          </ol>
+          <div class="video-meta"><span>Narrated, with subtitles · 2:18</span><span class="i-jump">Click a chapter to jump there</span></div>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="stage">
+          <div class="tagline"><span class="dot"></span><span class="label">Lab · square from −1 to 1</span></div>
+          <canvas id="mc-canvas" aria-label="Random dots in a square with a circle"></canvas>
+        </div>
+        <div class="rail">
+          <div><h3>Throw the dots</h3><p>Yellow digits already match π.</p></div>
+          <div><div class="big" id="mc-est">–</div><p class="big-cap">π ≈ 4 × inside ÷ dots</p></div>
+          <div class="stats">
+            <div class="stat"><div class="l">Dots</div><div class="v" id="mc-n">0</div></div>
+            <div class="stat g"><div class="l">Inside</div><div class="v" id="mc-in">0</div></div>
+            <div class="stat"><div class="l">Error</div><div class="v" id="mc-err">–</div></div>
+          </div>
+          <div class="ctrl">
+            <label for="mc-batch">Dots per throw</label>
+            <output id="mc-batch-out" for="mc-batch">100</output>
+            <input type="range" id="mc-batch" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="btns">
+            <button type="button" class="primary" id="mc-throw">Throw</button>
+            <button type="button" id="mc-auto" aria-pressed="false">Keep throwing</button>
+            <button type="button" id="mc-reset">Reset</button>
+          </div>
+          <div class="chart-wrap"><p class="label">Estimate over time · dashed line = π</p><canvas id="mc-chart" aria-label="Convergence chart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="sheet" id="quiz-mc">
+        <div class="sheet-side">
+          <p class="label">Problem sheet</p>
+          <div class="pno">No.&nbsp;<span class="q-no">1</span></div>
+          <div class="score"><span><span class="i-solved">Solved</span> <b class="q-score">0</b></span><span><span class="i-streak">Streak</span> <b class="q-streak">0</b></span></div>
+        </div>
+        <div class="sheet-main">
+          <p class="q-text"></p>
+          <div class="q-options"></div>
+          <form class="q-num" hidden><label class="sr-only" for="ans-mc">Your answer</label><input id="ans-mc" type="text" inputmode="decimal" autocomplete="off" placeholder="3.14"><button type="submit" class="primary">Check</button></form>
+          <div class="q-feedback" role="status" aria-live="polite"></div>
+          <div class="q-actions"><button type="button" class="q-reveal" hidden>Show answer</button><button type="button" class="q-next primary" hidden>Next problem</button><span class="q-count"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 03 BUFFON ================= -->
+  <section class="chapter bf" id="buffon" aria-labelledby="bf-h">
+    <div class="wrap">
+      <header class="ch-head">
+        <div class="ch-num" aria-hidden="true">03</div>
+        <div><p class="label">1777 · Georges-Louis Leclerc, Comte de Buffon</p><h2 id="bf-h">Drop <em>needles</em> on a striped floor</h2></div>
+      </header>
+
+      <div class="story">
+        <div class="text">
+          <p class="thesis">There is no circle in sight, yet π decides how often a falling needle <em>crosses a line</em>.</p>
+          <p class="body">Lines are drawn d apart and a needle of length l lands at random. Because the needle can point in any direction, the crossing probability is 2l ⁄ (πd). Count needles and crossings, flip the formula, and you have π.</p>
+          <div class="formula"><span class="label">The idea in one line (l = d)</span><span style="color:var(--yellow)">π</span> ≈ <span class="frac"><span>2 × needles</span><span style="color:var(--red)">crossings</span></span></div>
+          <p class="after"><b>After watching:</b> shorten the needle in the lab. It crosses less often, yet the estimate still heads to π.</p>
+        </div>
+        <div class="video">
+          <div class="frame" id="bf-video"><video controls preload="metadata" playsinline poster="videos/buffon.jpg" src="videos/buffon.mp4" data-en="videos/buffon.mp4" data-zh="videos/buffon_zh.mp4" aria-label="Buffon's Needle video"></video></div>
+          <ol class="timeline" aria-label="Film chapters">
+            <li style="--d:20"><button type="button" data-t="0"><span class="ts">0:00</span><span class="nm">Buffon's game</span></button></li>
+            <li style="--d:20"><button type="button" data-t="20"><span class="ts">0:20</span><span class="nm">y and θ</span></button></li>
+            <li style="--d:27"><button type="button" data-t="40"><span class="ts">0:40</span><span class="nm">P = 2⁄π</span></button></li>
+            <li style="--d:13"><button type="button" data-t="67"><span class="ts">1:07</span><span class="nm">Flip it</span></button></li>
+            <li style="--d:26"><button type="button" data-t="80"><span class="ts">1:20</span><span class="nm">1000 needles</span></button></li>
+            <li style="--d:36"><button type="button" data-t="106"><span class="ts">1:46</span><span class="nm">Lazzarini, summary</span></button></li>
+          </ol>
+          <div class="video-meta"><span>Narrated, with subtitles · 2:22</span><span class="i-jump">Click a chapter to jump there</span></div>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="stage">
+          <div class="tagline"><span class="dot"></span><span class="label">Lab · line spacing d = 1</span></div>
+          <canvas id="bf-canvas" aria-label="Needles dropped on parallel lines"></canvas>
+        </div>
+        <div class="rail">
+          <div><h3>Drop the needles</h3><p>Red needles cross a line. Yellow digits already match π.</p></div>
+          <div><div class="big" id="bf-est">–</div><p class="big-cap">π ≈ 2l × needles ÷ crossings</p></div>
+          <div class="stats">
+            <div class="stat"><div class="l">Needles</div><div class="v" id="bf-n">0</div></div>
+            <div class="stat r"><div class="l">Crossings</div><div class="v" id="bf-c">0</div></div>
+            <div class="stat"><div class="l">Error</div><div class="v" id="bf-err">–</div></div>
+          </div>
+          <div class="ctrl">
+            <label for="bf-l">Needle length l (resets the count)</label>
+            <output id="bf-l-out" for="bf-l">1.00</output>
+            <input type="range" id="bf-l" min="0.2" max="1" step="0.05" value="1">
+          </div>
+          <div class="ctrl">
+            <label for="bf-batch">Needles per drop</label>
+            <output id="bf-batch-out" for="bf-batch">50</output>
+            <input type="range" id="bf-batch" min="0" max="100" step="1" value="46">
+          </div>
+          <div class="btns">
+            <button type="button" class="primary" id="bf-drop">Drop</button>
+            <button type="button" id="bf-auto" aria-pressed="false">Keep dropping</button>
+            <button type="button" id="bf-reset">Reset</button>
+          </div>
+          <div class="chart-wrap"><p class="label">Estimate over time · dashed line = π</p><canvas id="bf-chart" aria-label="Convergence chart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="sheet" id="quiz-bf">
+        <div class="sheet-side">
+          <p class="label">Problem sheet</p>
+          <div class="pno">No.&nbsp;<span class="q-no">1</span></div>
+          <div class="score"><span><span class="i-solved">Solved</span> <b class="q-score">0</b></span><span><span class="i-streak">Streak</span> <b class="q-streak">0</b></span></div>
+        </div>
+        <div class="sheet-main">
+          <p class="q-text"></p>
+          <div class="q-options"></div>
+          <form class="q-num" hidden><label class="sr-only" for="ans-bf">Your answer</label><input id="ans-bf" type="text" inputmode="decimal" autocomplete="off" placeholder="3.14"><button type="submit" class="primary">Check</button></form>
+          <div class="q-feedback" role="status" aria-live="polite"></div>
+          <div class="q-actions"><button type="button" class="q-reveal" hidden>Show answer</button><button type="button" class="q-next primary" hidden>Next problem</button><span class="q-count"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ================= 04 LEIBNIZ ================= -->
+  <section class="chapter lb" id="leibniz" aria-labelledby="lb-h">
+    <div class="wrap">
+      <header class="ch-head">
+        <div class="ch-num" aria-hidden="true">04</div>
+        <div><p class="label">c. 1400 Madhava · 1674 Leibniz</p><h2 id="lb-h">Add up <em>fractions</em>, forever</h2></div>
+      </header>
+
+      <div class="story">
+        <div class="text">
+          <p class="thesis">No circle, no chance. Just odd numbers: <em>add a third, take a fifth</em>… and π appears.</p>
+          <p class="body">Each new term pushes the sum past π, then back again, and every swing is smaller than the last. The reason is an area: the curve y = 1 ⁄ (1 + x²) encloses exactly π⁄4 between 0 and 1. The catch is speed: the error is about 1 ⁄ n, so each new digit costs ten times more terms.</p>
+          <div class="formula"><span class="label">The idea in one line</span><span style="color:var(--yellow)">π</span> = 4 × ( 1 − <span class="frac"><span>1</span><span>3</span></span> + <span class="frac"><span>1</span><span>5</span></span> − <span class="frac"><span>1</span><span>7</span></span> + … )</div>
+          <p class="after"><b>After watching:</b> turn on "averaged sums" in the lab. Averaging two neighbouring sums cancels most of the swing.</p>
+        </div>
+        <div class="video">
+          <div class="frame" id="lb-video"><video controls preload="metadata" playsinline poster="videos/leibniz.jpg" src="videos/leibniz.mp4" data-en="videos/leibniz.mp4" data-zh="videos/leibniz_zh.mp4" aria-label="The Leibniz Series video"></video></div>
+          <ol class="timeline" aria-label="Film chapters">
+            <li style="--d:25"><button type="button" data-t="0"><span class="ts">0:00</span><span class="nm">π from fractions</span></button></li>
+            <li style="--d:31"><button type="button" data-t="25"><span class="ts">0:25</span><span class="nm">The swing</span></button></li>
+            <li style="--d:45"><button type="button" data-t="56"><span class="ts">0:56</span><span class="nm">Why π?</span></button></li>
+            <li style="--d:35"><button type="button" data-t="101"><span class="ts">1:41</span><span class="nm">The catch</span></button></li>
+            <li style="--d:31"><button type="button" data-t="136"><span class="ts">2:16</span><span class="nm">Shortcuts</span></button></li>
+            <li style="--d:40"><button type="button" data-t="167"><span class="ts">2:47</span><span class="nm">Four roads</span></button></li>
+          </ol>
+          <div class="video-meta"><span>Narrated, with subtitles · 3:27</span><span class="i-jump">Click a chapter to jump there</span></div>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="stage">
+          <div class="tagline"><span class="dot"></span><span class="label">Lab · 4 × (1 − 1/3 + 1/5 − …)</span></div>
+          <canvas id="lb-canvas" aria-label="Partial sums of the Leibniz series swinging around π"></canvas>
+        </div>
+        <div class="rail">
+          <div><h3>Add the terms</h3><p>Yellow digits already match π.</p></div>
+          <div><div class="big" id="lb-est">4.0000</div><p class="big-cap"><span class="i-lbcap1">π ≈ 4 × (sum of the first</span> <span class="mono" id="lb-n-cap">1</span> <span class="i-lbcap2">terms)</span></p></div>
+          <div class="stats">
+            <div class="stat"><div class="l">Last term</div><div class="v" id="lb-term">1</div></div>
+            <div class="stat"><div class="l">Error</div><div class="v" id="lb-err">0.8584</div></div>
+            <div class="stat" style="--x:1"><div class="l">Averaged</div><div class="v" id="lb-avg" style="color:var(--yellow)">3.3333</div></div>
+          </div>
+          <div class="ctrl">
+            <label for="lb-n">Number of terms</label>
+            <output id="lb-n-out" for="lb-n">1</output>
+            <input type="range" id="lb-n" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="btns" role="group" aria-label="Jump to a number of terms">
+            <button type="button" class="chipbtn" data-lb="1">1</button>
+            <button type="button" class="chipbtn" data-lb="2">2</button>
+            <button type="button" class="chipbtn" data-lb="3">3</button>
+            <button type="button" class="chipbtn" data-lb="10">10</button>
+            <button type="button" class="chipbtn" data-lb="100">100</button>
+            <button type="button" class="chipbtn" data-lb="1000">1000</button>
+          </div>
+          <div class="btns">
+            <button type="button" class="primary" id="lb-add">Add one term</button>
+            <button type="button" id="lb-play">Play from 1</button>
+            <label class="check"><input type="checkbox" id="lb-avg-on" checked> <span>Show averaged sums</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="quiz-lb">
+        <div class="sheet-side">
+          <p class="label">Problem sheet</p>
+          <div class="pno">No.&nbsp;<span class="q-no">1</span></div>
+          <div class="score"><span><span class="i-solved">Solved</span> <b class="q-score">0</b></span><span><span class="i-streak">Streak</span> <b class="q-streak">0</b></span></div>
+        </div>
+        <div class="sheet-main">
+          <p class="q-text"></p>
+          <div class="q-options"></div>
+          <form class="q-num" hidden><label class="sr-only" for="ans-lb">Your answer</label><input id="ans-lb" type="text" inputmode="decimal" autocomplete="off" placeholder="3.14"><button type="submit" class="primary">Check</button></form>
+          <div class="q-feedback" role="status" aria-live="polite"></div>
+          <div class="q-actions"><button type="button" class="q-reveal" hidden>Show answer</button><button type="button" class="q-next primary" hidden>Next problem</button><span class="q-count"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ================= 05 THE RACE ================= -->
+  <section class="chapter rc" id="race" aria-labelledby="rc-h">
+    <div class="wrap">
+      <header class="ch-head">
+        <div class="ch-num" aria-hidden="true">05</div>
+        <div><p class="label">Finale · all four methods at once</p><h2 id="rc-h">Four methods, <em>one race</em></h2></div>
+      </header>
+
+      <div class="story">
+        <div class="text">
+          <p class="thesis">Give every method the same budget: <em>10,000 steps</em>. Who gets closest to π?</p>
+          <p class="body">A step is one more side for the polygons, one more dot, one more needle, or one more term of the series. What decides the race is how fast each error shrinks as the steps pile up. On the chart below both axes are logarithmic, so each law becomes a straight line and a steeper line means a faster method.</p>
+          <p class="after"><b>Try this:</b> run the race a few times. The green and red lines (dots and needles) change every run because they use chance. The polygons and the series give the same answer every time.</p>
+        </div>
+        <div class="laws" aria-label="How fast each error shrinks">
+          <div class="law" style="--c:var(--blue)"><span class="nm">01 · Polygons</span><span class="eq">error ≈ <span class="frac"><span>5</span><span>n²</span></span></span><span class="st">n = number of sides</span></div>
+          <div class="law" style="--c:var(--green)"><span class="nm">02 · Random dots</span><span class="eq">error ≈ <span class="frac"><span>1.6</span><span>√n</span></span></span><span class="st">n = number of dots</span></div>
+          <div class="law" style="--c:var(--red)"><span class="nm">03 · Needles</span><span class="eq">error ≈ <span class="frac"><span>2.4</span><span>√n</span></span></span><span class="st">n = number of needles</span></div>
+          <div class="law" style="--c:var(--purple)"><span class="nm">04 · Fractions</span><span class="eq">error ≈ <span class="frac"><span>1</span><span>n</span></span></span><span class="st">n = number of terms</span></div>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="stage">
+          <div class="tagline"><span class="dot"></span><span class="label">Race · error after each step (log scales)</span></div>
+          <canvas id="race-canvas" aria-label="Error of each method against the number of steps, on logarithmic axes"></canvas>
+        </div>
+        <div class="rail">
+          <div class="race-steps"><div><h3>Live standings</h3><p>Bars show how many decimals are already correct.</p></div></div>
+          <div class="lanes" id="lanes">
+            <div class="lane" id="lane-ar" style="--c:var(--blue)"><span class="rank">1</span><div><div class="ln"><b>Polygons</b> · inscribed perimeter</div><div class="lv" id="race-ar">–</div></div><div class="digbar" aria-hidden="true"></div></div>
+            <div class="lane" id="lane-mc" style="--c:var(--green)"><span class="rank">2</span><div><div class="ln"><b>Random dots</b> · 4 × inside ÷ dots</div><div class="lv" id="race-mc">–</div></div><div class="digbar" aria-hidden="true"></div></div>
+            <div class="lane" id="lane-bf" style="--c:var(--red)"><span class="rank">3</span><div><div class="ln"><b>Needles</b> · 2 × needles ÷ crossings</div><div class="lv" id="race-bf">–</div></div><div class="digbar" aria-hidden="true"></div></div>
+            <div class="lane" id="lane-lb" style="--c:var(--purple)"><span class="rank">4</span><div><div class="ln"><b>Fractions</b> · 4 × (1 − 1/3 + …)</div><div class="lv" id="race-lb">–</div></div><div class="digbar" aria-hidden="true"></div></div>
+          </div>
+          <div class="ctrl">
+            <label for="race-speed">Race speed</label>
+            <output id="race-speed-out" for="race-speed">×1.0</output>
+            <input type="range" id="race-speed" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="btns">
+            <button type="button" class="primary" id="race-go">Start the race</button>
+            <label class="check"><input type="checkbox" id="race-guide" checked> <span>Show typical error for chance methods</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table class="cmp">
+          <caption class="sr-only">Comparison of the four methods</caption>
+          <thead><tr><th scope="col">Method</th><th scope="col">When</th><th scope="col">Branch of maths</th><th scope="col">One step</th><th scope="col">Error after n steps</th><th scope="col">After 10,000 steps</th><th scope="col">Strength</th><th scope="col">Weakness</th></tr></thead>
+          <tbody>
+            <tr style="--c:var(--blue)"><td>Polygons</td><td>c. 250 BC</td><td>Geometry</td><td>one more side</td><td class="num">≈ 5 ÷ n²</td><td class="num"><span class="ok">3.1415926</span></td><td>Fastest by far, and gives a guaranteed upper and lower bound</td><td>Each new side needs square roots by hand</td></tr>
+            <tr style="--c:var(--green)"><td>Random dots</td><td>1940s</td><td>Probability</td><td>one random dot</td><td class="num">≈ 1.6 ÷ √n</td><td class="num"><span class="ok">3.1</span> (± 0.016)</td><td>Works for any shape, even with no formula</td><td>Slowest: 100× the dots for one more digit, and a new answer every run</td></tr>
+            <tr style="--c:var(--red)"><td>Needles</td><td>1777</td><td>Geometric probability</td><td>one dropped needle</td><td class="num">≈ 2.4 ÷ √n</td><td class="num"><span class="ok">3.1</span> (± 0.024)</td><td>A physical experiment anyone can do on a floor</td><td>Even noisier than the dots; easy to fool yourself (Lazzarini)</td></tr>
+            <tr style="--c:var(--purple)"><td>Fractions</td><td>c. 1400 / 1674</td><td>Infinite series</td><td>one more term</td><td class="num">≈ 1 ÷ n</td><td class="num"><span class="ok">3.141</span></td><td>Only needs adding and dividing</td><td>Painfully slow on its own; needs tricks such as averaging</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="takeaway">
+        <div><h3>Geometry wins the race</h3><p>The polygon error falls like 1 ÷ n², so doubling the sides makes it four times smaller. With 10,000 sides Archimedes' method already has seven correct decimals.</p></div>
+        <div><h3>Chance is honest but slow</h3><p>Dots and needles improve like 1 ÷ √n, so a hundred times more effort buys one digit. Their value is that the same idea measures areas and probabilities no formula can reach.</p></div>
+        <div><h3>Series are how we really do it</h3><p>The Leibniz series is slow, but it opened the door to faster ones. The Chudnovsky series used by today's record computations adds about 14 correct digits with every term.</p></div>
+      </div>
+
+      <div class="sheet" id="quiz-rc">
+        <div class="sheet-side">
+          <p class="label">Problem sheet</p>
+          <div class="pno">No.&nbsp;<span class="q-no">1</span></div>
+          <div class="score"><span><span class="i-solved">Solved</span> <b class="q-score">0</b></span><span><span class="i-streak">Streak</span> <b class="q-streak">0</b></span></div>
+        </div>
+        <div class="sheet-main">
+          <p class="q-text"></p>
+          <div class="q-options"></div>
+          <form class="q-num" hidden><label class="sr-only" for="ans-rc">Your answer</label><input id="ans-rc" type="text" inputmode="decimal" autocomplete="off" placeholder="100"><button type="submit" class="primary">Check</button></form>
+          <div class="q-feedback" role="status" aria-live="polite"></div>
+          <div class="q-actions"><button type="button" class="q-reveal" hidden>Show answer</button><button type="button" class="q-next primary" hidden>Next problem</button><span class="q-count"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="big-f">Polygons, dots, needles, fractions.<br>Four roads, one <b>π</b>.</p>
+    <p class="cred">Team B · Project 2<br>Films made with Manim Community<br>Every lab runs in your browser</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const COL = { ink: "#efebe1", muted: "#959ca5", faint: "#5d646c", hair: "#2a2f35", blue: "#58C4DD", red: "#FC6255", green: "#83C167", yellow: "#F4D345", stage: "#0b0c0e", rail: "#15181b" };
+const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const PI_STR = "3.14159265358979323846264338327950288419716939937510582097494459230781640628620899";
+const rand = (a, b) => a + Math.random() * (b - a);
+const randint = (a, b) => Math.floor(rand(a, b + 1));
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const logScale = (v, max) => Math.max(1, Math.round(Math.pow(max, v / 100)));
+const fmtInt = (n) => n.toLocaleString("en-US");
+const I18N = { cur: "en" };
+const t = (en, zh) => (I18N.cur === "zh" ? zh : en);
+
+function fit(cv, aspect) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth || 400;
+  const h = Math.round(w * aspect);
+  cv.style.height = h + "px";
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+function polyPath(ctx, cx, cy, r, n, off) {
+  ctx.beginPath();
+  for (let k = 0; k <= n; k++) {
+    const t = off + (2 * Math.PI * k) / n;
+    const x = cx + r * Math.cos(t), y = cy + r * Math.sin(t);
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+/* estimate → HTML with digits that match π in yellow */
+function piDigits(v) {
+  const s = v.toFixed(4), ref = Math.PI.toFixed(4);
+  let k = 0; while (k < s.length && s[k] === ref[k]) k++;
+  return `<span class="ok">${s.slice(0, k)}</span><span class="no">${s.slice(k)}</span>`;
+}
+/* slider fill for WebKit */
+function paintRange(r) { const p = ((r.value - r.min) / (r.max - r.min)) * 100; r.style.setProperty("--p", p + "%"); }
+document.querySelectorAll('input[type=range]').forEach((r) => { paintRange(r); r.addEventListener("input", () => paintRange(r)); });
+
+/* ---------- scroll progress ---------- */
+const prog = $("progress");
+function onScroll() { const d = document.documentElement; const m = d.scrollHeight - d.clientHeight; prog.style.width = (m > 0 ? (d.scrollTop / m) * 100 : 0) + "%"; }
+window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+/* ---------- convergence chart ---------- */
+function drawChart(cv, hist, total, color, emptyMsg) {
+  const { ctx, w, h } = fit(cv, 0.4);
+  ctx.clearRect(0, 0, w, h);
+  const pl = 34, pr = 10, pt = 8, pb = 20;
+  const y0 = 2.6, y1 = 3.8, xmax = Math.max(total, 10);
+  const X = (n) => pl + (w - pl - pr) * (n / xmax);
+  const Y = (v) => pt + (h - pt - pb) * (1 - (Math.min(Math.max(v, y0), y1) - y0) / (y1 - y0));
+  ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.textBaseline = "middle";
+  for (const v of [2.6, 3.0, 3.4, 3.8]) {
+    ctx.strokeStyle = "rgba(239,235,225,0.06)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pl, Y(v)); ctx.lineTo(w - pr, Y(v)); ctx.stroke();
+    ctx.fillStyle = COL.faint; ctx.textAlign = "right"; ctx.fillText(v.toFixed(1), pl - 6, Y(v));
+  }
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = COL.yellow; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(pl, Y(Math.PI)); ctx.lineTo(w - pr, Y(Math.PI)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = COL.faint; ctx.textAlign = "left"; ctx.fillText("0", pl, h - 8);
+  ctx.textAlign = "right"; ctx.fillText(fmtInt(xmax), w - pr, h - 8);
+  if (hist.length < 2) {
+    ctx.fillStyle = COL.muted; ctx.textAlign = "center"; ctx.font = "13px 'IBM Plex Sans', sans-serif";
+    ctx.fillText(emptyMsg, (pl + w - pr) / 2, h / 2 - 10); return;
+  }
+  const grad = ctx.createLinearGradient(0, pt, 0, h - pb);
+  grad.addColorStop(0, color + "33"); grad.addColorStop(1, color + "00");
+  ctx.beginPath();
+  hist.forEach(([n, v], i) => { if (i === 0) ctx.moveTo(X(n), Y(v)); else ctx.lineTo(X(n), Y(v)); });
+  ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.stroke();
+  ctx.lineTo(X(hist[hist.length - 1][0]), h - pb); ctx.lineTo(X(hist[0][0]), h - pb); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  const [ln, lv] = hist[hist.length - 1];
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(X(ln), Y(lv), 3.5, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = color + "55"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(X(ln), Y(lv), 6, 0, 2 * Math.PI); ctx.stroke();
+}
+
+/* ---------- Archimedes maths ---------- */
+const lowerB = (n) => n * Math.sin(Math.PI / n);
+const upperB = (n) => n * Math.tan(Math.PI / n);
+function agree(lo, hi) {
+  const a = lo.toFixed(8), b = hi.toFixed(8);
+  let k = 0; while (k < a.length && a[k] === b[k]) k++;
+  let s = a.slice(0, k); if (s.endsWith(".")) s = s.slice(0, -1);
+  return s || t("nothing yet", "还没有");
+}
+
+/* ---------- hero: polygon + ring of π digits ---------- */
+const heroCv = $("hero-canvas");
+let heroN = 6;
+function drawHero() {
+  const { ctx, w, h } = fit(heroCv, 0.92);
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.33;
+  const caught = agree(lowerB(heroN), upperB(heroN));
+  const caughtLen = caught === "nothing yet" ? 0 : caught.length;
+  // digit ring
+  const digits = PI_STR.slice(0, 64);
+  const rr = R + Math.min(w, h) * 0.1;
+  ctx.font = `500 ${Math.max(11, Math.round(R * 0.085))}px 'IBM Plex Mono', monospace`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (let i = 0; i < digits.length; i++) {
+    const t = -Math.PI / 2 + (i / digits.length) * 2 * Math.PI;
+    ctx.save();
+    ctx.translate(cx + rr * Math.cos(t), cy + rr * Math.sin(t));
+    ctx.rotate(t + Math.PI / 2);
+    ctx.fillStyle = i < caughtLen ? COL.yellow : "rgba(239,235,225,0.18)";
+    ctx.fillText(digits[i], 0, 0);
+    ctx.restore();
+  }
+  // circle + outer + inner polygon
+  polyPath(ctx, cx, cy, R / Math.cos(Math.PI / heroN), heroN, -Math.PI / 2);
+  ctx.strokeStyle = "rgba(252,98,85,0.55)"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.strokeStyle = COL.yellow; ctx.lineWidth = 2; ctx.stroke();
+  polyPath(ctx, cx, cy, R, heroN, -Math.PI / 2);
+  ctx.fillStyle = "rgba(88,196,221,0.10)"; ctx.fill(); ctx.strokeStyle = COL.blue; ctx.lineWidth = 2; ctx.stroke();
+  // centre label
+  ctx.font = `300 italic ${Math.round(R * 0.5)}px Fraunces, Georgia, serif`;
+  ctx.fillStyle = COL.ink; ctx.fillText("π", cx, cy - R * 0.05);
+  ctx.font = `500 ${Math.max(11, Math.round(R * 0.075))}px 'IBM Plex Mono', monospace`;
+  ctx.fillStyle = COL.muted; ctx.fillText(lowerB(heroN).toFixed(4) + " … " + upperB(heroN).toFixed(4), cx, cy + R * 0.32);
+  $("hero-n").textContent = t(`n = ${heroN} sides`, `n = ${heroN} 条边`);
+  $("hero-v").textContent = caught;
+}
+drawHero();
+if (!REDUCE) {
+  const seq = [3, 4, 6, 8, 12, 16, 24, 48, 96, 192, 384, 768, 1536, 3072];
+  let i = 2;
+  setInterval(() => { i = (i + 1) % seq.length; heroN = seq[i]; drawHero(); }, 1100);
+}
+
+/* ---------- video chapters: click to seek, highlight the current one ---------- */
+document.querySelectorAll(".video").forEach((box) => {
+  const v = box.querySelector("video"); if (!v) return;
+  const items = [...box.querySelectorAll(".timeline li")];
+  const starts = items.map((li) => +li.querySelector("button").dataset.t);
+  items.forEach((li, i) => li.querySelector("button").addEventListener("click", () => {
+    v.currentTime = starts[i];
+    const p = v.play(); if (p && p.catch) p.catch(() => {});
+  }));
+  const mark = () => {
+    let k = 0; starts.forEach((t, i) => { if (v.currentTime >= t - 0.05) k = i; });
+    items.forEach((li, i) => li.classList.toggle("now", i === k && (v.currentTime > 0 || !v.paused)));
+  };
+  v.addEventListener("timeupdate", mark); v.addEventListener("seeked", mark);
+});
+
+/* =========================================================
+   01 ARCHIMEDES LAB
+   ========================================================= */
+const A = { n: 6, zoom: false, playing: null };
+const archCv = $("arch-canvas"), archSl = $("arch-n");
+function drawArch() {
+  const n = A.n;
+  const { ctx, w, h } = fit(archCv, 0.86);
+  ctx.fillStyle = COL.stage; ctx.fillRect(0, 0, w, h);
+  // faint polar grid
+  ctx.strokeStyle = "rgba(239,235,225,0.04)"; ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 28) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 28) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  const R = h * 0.34, cx = w / 2, cy = h / 2 + 8, off = -Math.PI / 2;
+  let z = 1;
+  ctx.save();
+  if (A.zoom) {
+    const side = 2 * R * Math.sin(Math.PI / n);
+    z = Math.min(80, Math.max(1.5, w / (side * 3)));
+    ctx.translate(w / 2, h * 0.45); ctx.scale(z, z); ctx.translate(-cx, -(cy - R));
+  }
+  const lw = 2.2 / z;
+  polyPath(ctx, cx, cy, R / Math.cos(Math.PI / n), n, off);
+  ctx.fillStyle = "rgba(252,98,85,0.07)"; ctx.fill(); ctx.strokeStyle = COL.red; ctx.lineWidth = lw; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.strokeStyle = COL.yellow; ctx.lineWidth = lw; ctx.stroke();
+  polyPath(ctx, cx, cy, R, n, off);
+  ctx.fillStyle = "rgba(88,196,221,0.10)"; ctx.fill(); ctx.strokeStyle = COL.blue; ctx.lineWidth = lw; ctx.stroke();
+  if (!A.zoom && n <= 24) {
+    ctx.strokeStyle = "rgba(239,235,225,0.14)"; ctx.lineWidth = 1;
+    for (let k = 0; k < n; k++) {
+      const t = off + (2 * Math.PI * k) / n;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + R * Math.cos(t), cy + R * Math.sin(t)); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  // big n in the corner
+  ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+  ctx.font = `300 ${Math.round(h * 0.14)}px Fraunces, Georgia, serif`; ctx.fillStyle = "rgba(239,235,225,0.9)";
+  ctx.fillText(n, w - 18, h - 14);
+  ctx.font = "500 11px 'IBM Plex Mono', monospace"; ctx.fillStyle = COL.muted;
+  ctx.fillText(A.zoom ? t(`SIDES · ZOOM ×${Math.round(z)}`, `边数 · 放大 ×${Math.round(z)}`) : t("SIDES", "边数"), w - 20, h - 14 - h * 0.14);
+  ctx.textAlign = "left";
+  const key = [[t("inscribed", "内接多边形"), COL.blue], [t("circle", "圆"), COL.yellow], [t("circumscribed", "外切多边形"), COL.red]];
+  key.forEach(([t, c], i) => { ctx.fillStyle = c; ctx.fillRect(18, h - 58 + i * 17, 10, 2); ctx.fillStyle = COL.muted; ctx.fillText(t, 34, h - 52 + i * 17); });
+
+  const lo = lowerB(n), hi = upperB(n);
+  $("arch-n-out").textContent = n;
+  $("arch-lo").textContent = lo.toFixed(4);
+  $("arch-hi").textContent = hi.toFixed(4);
+  $("arch-gap").textContent = (hi - lo).toFixed(4);
+  const pct = (v) => ((Math.min(Math.max(v, 2.9), 3.6) - 2.9) / 0.7) * 100;
+  const seg = $("arch-seg");
+  seg.style.left = pct(lo) + "%";
+  seg.style.width = Math.max(0.6, pct(hi) - pct(lo)) + "%";
+  $("arch-pi").style.left = pct(Math.PI) + "%";
+  $("arch-digits").textContent = agree(lo, hi);
+  document.querySelectorAll("#archimedes [data-n]").forEach((b) => b.classList.toggle("on", +b.dataset.n === n));
+}
+function setN(n) { A.n = n; archSl.value = n; paintRange(archSl); drawArch(); }
+archSl.addEventListener("input", () => { stopArchPlay(); setN(+archSl.value); });
+document.querySelectorAll("#archimedes [data-n]").forEach((b) =>
+  b.addEventListener("click", () => { stopArchPlay(); setN(+b.dataset.n); }));
+$("arch-zoom").addEventListener("change", (e) => { A.zoom = e.target.checked; drawArch(); });
+function stopArchPlay() { if (A.playing) { clearInterval(A.playing); A.playing = null; $("arch-play").textContent = t("Play Archimedes' path", "播放阿基米德的步骤"); } }
+$("arch-play").addEventListener("click", () => {
+  if (A.playing) { stopArchPlay(); return; }
+  const path = [6, 12, 24, 48, 96]; let i = 0;
+  setN(path[0]); $("arch-play").textContent = t("Stop", "停止");
+  A.playing = setInterval(() => { i++; if (i >= path.length) { stopArchPlay(); return; } setN(path[i]); }, REDUCE ? 600 : 1100);
+});
+
+/* =========================================================
+   02 MONTE CARLO LAB
+   ========================================================= */
+const M = { pts: [], total: 0, inside: 0, hist: [], queue: 0, auto: false, raf: 0 };
+const MC_MAXDRAW = 20000;
+const mcCv = $("mc-canvas"), mcChart = $("mc-chart"), mcBatch = $("mc-batch");
+const mcBatchVal = () => logScale(+mcBatch.value, 10000);
+const thin = (hist) => hist.length > 600 ? hist.filter((_, i) => i % 2 === 0 || i === hist.length - 1) : hist;
+function mcAdd(k) {
+  for (let i = 0; i < k; i++) {
+    const x = Math.random() * 2 - 1, y = Math.random() * 2 - 1;
+    const inn = x * x + y * y <= 1;
+    M.total++; if (inn) M.inside++;
+    if (M.pts.length < MC_MAXDRAW) M.pts.push([x, y, inn]);
+  }
+  if (M.total) { M.hist.push([M.total, (4 * M.inside) / M.total]); M.hist = thin(M.hist); }
+}
+function drawMC() {
+  const { ctx, w, h } = fit(mcCv, 0.86);
+  ctx.fillStyle = COL.stage; ctx.fillRect(0, 0, w, h);
+  const s = h * 0.4, cx = w / 2, cy = h / 2 + 8;
+  const r = M.total < 300 ? 3.4 : M.total < 3000 ? 2 : 1.2;
+  for (const [x, y, inn] of M.pts) {
+    ctx.fillStyle = inn ? COL.green : COL.red;
+    ctx.beginPath(); ctx.arc(cx + x * s, cy - y * s, r / 2 + 0.3, 0, 2 * Math.PI); ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(239,235,225,0.7)"; ctx.lineWidth = 1.2; ctx.strokeRect(cx - s, cy - s, 2 * s, 2 * s);
+  ctx.beginPath(); ctx.arc(cx, cy, s, 0, 2 * Math.PI); ctx.strokeStyle = COL.blue; ctx.lineWidth = 2; ctx.stroke();
+  ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+  ctx.font = `300 ${Math.round(h * 0.1)}px Fraunces, Georgia, serif`; ctx.fillStyle = "rgba(239,235,225,0.9)";
+  ctx.fillText(fmtInt(M.total), w - 18, h - 12);
+  ctx.font = "500 11px 'IBM Plex Mono', monospace"; ctx.fillStyle = COL.muted;
+  ctx.fillText(M.total > MC_MAXDRAW ? t(`DOTS · FIRST ${fmtInt(MC_MAXDRAW)} SHOWN`, `点数 · 只画前 ${fmtInt(MC_MAXDRAW)} 个`) : t("DOTS", "点数"), w - 20, h - 12 - h * 0.1);
+  if (M.total === 0) { ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "14px 'IBM Plex Sans', sans-serif"; ctx.fillStyle = COL.muted; ctx.fillText(t("Press Throw to start", "点击“投点”开始"), cx, cy); }
+  const est = M.total ? (4 * M.inside) / M.total : null;
+  $("mc-n").textContent = fmtInt(M.total);
+  $("mc-in").textContent = fmtInt(M.inside);
+  $("mc-est").innerHTML = est === null ? "–" : piDigits(est);
+  $("mc-err").textContent = est === null ? "–" : Math.abs(est - Math.PI).toFixed(4);
+  drawChart(mcChart, M.hist, M.total, COL.green, t("Throw some dots to draw the graph", "投一些点，曲线就会出现"));
+}
+function mcLoop() {
+  if (M.queue === 0 && M.auto) M.queue += mcBatchVal();
+  if (M.queue > 0) {
+    const chunk = M.queue <= 20 ? 1 : Math.ceil(M.queue / 30);
+    mcAdd(chunk); M.queue -= chunk; drawMC();
+    M.raf = requestAnimationFrame(mcLoop);
+  } else M.raf = 0;
+}
+function mcThrow(k) {
+  if (REDUCE && !M.auto) { mcAdd(k); drawMC(); return; }
+  M.queue += k; if (!M.raf) M.raf = requestAnimationFrame(mcLoop);
+}
+mcBatch.addEventListener("input", () => { $("mc-batch-out").textContent = fmtInt(mcBatchVal()); });
+$("mc-throw").addEventListener("click", () => mcThrow(mcBatchVal()));
+$("mc-auto").addEventListener("click", (e) => {
+  M.auto = !M.auto; e.currentTarget.setAttribute("aria-pressed", String(M.auto));
+  e.currentTarget.textContent = M.auto ? t("Stop", "停止") : t("Keep throwing", "连续投点");
+  if (M.auto && !M.raf) M.raf = requestAnimationFrame(mcLoop);
+});
+$("mc-reset").addEventListener("click", () => { Object.assign(M, { pts: [], total: 0, inside: 0, hist: [], queue: 0 }); drawMC(); });
+
+/* =========================================================
+   03 BUFFON LAB  (unit board 8 × 6, lines at y = 0..6, d = 1)
+   ========================================================= */
+const B = { l: 1, nd: [], total: 0, cross: 0, hist: [], queue: 0, auto: false, raf: 0 };
+const BF_MAXDRAW = 4000, BW = 8, BH = 6;
+const bfCv = $("bf-canvas"), bfChart = $("bf-chart"), bfBatch = $("bf-batch"), bfL = $("bf-l");
+const bfBatchVal = () => logScale(+bfBatch.value, 5000);
+function bfAdd(k) {
+  for (let i = 0; i < k; i++) {
+    const cx = Math.random() * BW, cy = Math.random() * BH, th = Math.random() * Math.PI;
+    const hh = (B.l / 2) * Math.sin(th);
+    const hit = Math.floor(cy + hh) !== Math.floor(cy - hh);
+    B.total++; if (hit) B.cross++;
+    if (B.nd.length < BF_MAXDRAW) B.nd.push([cx, cy, th, hit]);
+  }
+  if (B.cross > 0) { B.hist.push([B.total, (2 * B.l * B.total) / B.cross]); B.hist = thin(B.hist); }
+}
+function drawBF() {
+  const { ctx, w, h } = fit(bfCv, 0.86);
+  ctx.fillStyle = COL.stage; ctx.fillRect(0, 0, w, h);
+  const u = h / BH, ox = (w - BW * u) / 2;
+  // floorboards: alternate faint bands
+  for (let k = 0; k < BH; k++) { if (k % 2) { ctx.fillStyle = "rgba(88,196,221,0.035)"; ctx.fillRect(0, k * u, w, u); } }
+  ctx.strokeStyle = COL.blue; ctx.lineWidth = 1.5;
+  for (let k = 0; k <= BH; k++) { const y = Math.min(Math.max(k * u, 1), h - 1); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.lineCap = "round";
+  ctx.lineWidth = B.total < 100 ? 3 : B.total < 1000 ? 1.6 : 1;
+  for (const [cx, cy, th, hit] of B.nd) {
+    const dx = (B.l / 2) * Math.cos(th) * u, dy = (B.l / 2) * Math.sin(th) * u;
+    const px = ox + cx * u, py = cy * u;
+    ctx.strokeStyle = hit ? COL.red : "rgba(200,200,200,0.6)";
+    ctx.beginPath(); ctx.moveTo(px - dx, py - dy); ctx.lineTo(px + dx, py + dy); ctx.stroke();
+  }
+  ctx.lineCap = "butt";
+  // big count, on a backing so needles do not hide it
+  const label = fmtInt(B.total);
+  ctx.font = `300 ${Math.round(h * 0.1)}px Fraunces, Georgia, serif`;
+  const tw = ctx.measureText(label).width;
+  ctx.fillStyle = "rgba(11,12,14,0.8)"; ctx.fillRect(w - tw - 34, h - h * 0.1 - 40, tw + 26, h * 0.1 + 34);
+  ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillStyle = "rgba(239,235,225,0.9)";
+  ctx.fillText(label, w - 18, h - 12);
+  ctx.font = "500 11px 'IBM Plex Mono', monospace"; ctx.fillStyle = COL.muted;
+  ctx.fillText(B.total > BF_MAXDRAW ? t(`NEEDLES · FIRST ${fmtInt(BF_MAXDRAW)} SHOWN`, `针数 · 只画前 ${fmtInt(BF_MAXDRAW)} 根`) : t("NEEDLES", "针数"), w - 20, h - 12 - h * 0.1);
+  if (B.total === 0) { ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "14px 'IBM Plex Sans', sans-serif"; ctx.fillStyle = COL.muted; ctx.fillText(t("Press Drop to start", "点击“投针”开始"), w / 2, h / 2 - u / 2); }
+  const est = B.cross ? (2 * B.l * B.total) / B.cross : null;
+  $("bf-n").textContent = fmtInt(B.total);
+  $("bf-c").textContent = fmtInt(B.cross);
+  $("bf-est").innerHTML = est === null ? "–" : piDigits(est);
+  $("bf-err").textContent = est === null ? "–" : Math.abs(est - Math.PI).toFixed(4);
+  drawChart(bfChart, B.hist, B.total, COL.red, t("Drop some needles to draw the graph", "投一些针，曲线就会出现"));
+}
+function bfLoop() {
+  if (B.queue === 0 && B.auto) B.queue += bfBatchVal();
+  if (B.queue > 0) {
+    const chunk = B.queue <= 20 ? 1 : Math.ceil(B.queue / 30);
+    bfAdd(chunk); B.queue -= chunk; drawBF();
+    B.raf = requestAnimationFrame(bfLoop);
+  } else B.raf = 0;
+}
+function bfDrop(k) {
+  if (REDUCE && !B.auto) { bfAdd(k); drawBF(); return; }
+  B.queue += k; if (!B.raf) B.raf = requestAnimationFrame(bfLoop);
+}
+function bfReset() { Object.assign(B, { nd: [], total: 0, cross: 0, hist: [], queue: 0 }); drawBF(); }
+bfBatch.addEventListener("input", () => { $("bf-batch-out").textContent = fmtInt(bfBatchVal()); });
+bfL.addEventListener("input", () => { B.l = +bfL.value; $("bf-l-out").textContent = B.l.toFixed(2); paintRange(bfL); bfReset(); });
+$("bf-drop").addEventListener("click", () => bfDrop(bfBatchVal()));
+$("bf-auto").addEventListener("click", (e) => {
+  B.auto = !B.auto; e.currentTarget.setAttribute("aria-pressed", String(B.auto));
+  e.currentTarget.textContent = B.auto ? t("Stop", "停止") : t("Keep dropping", "连续投针");
+  if (B.auto && !B.raf) B.raf = requestAnimationFrame(bfLoop);
+});
+$("bf-reset").addEventListener("click", bfReset);
+
+
+/* =========================================================
+   04 LEIBNIZ LAB
+   ========================================================= */
+const LB_MAX = 1000;
+const S4 = [];   // S4[n-1] = 4 × (sum of the first n terms)
+{ let acc = 0; for (let k = 0; k <= LB_MAX; k++) { acc += (k % 2 ? -1 : 1) / (2 * k + 1); S4.push(4 * acc); } }
+const lbPartial = (n) => S4[n - 1];
+const L = { n: 1, avg: true, playing: null };
+const lbCv = $("lb-canvas"), lbSl = $("lb-n");
+const lbFromSlider = (v) => Math.max(1, Math.round(Math.pow(LB_MAX, v / 100)));
+const lbToSlider = (n) => Math.round((100 * Math.log(n)) / Math.log(LB_MAX));
+function drawLB() {
+  const n = L.n;
+  const { ctx, w, h } = fit(lbCv, 0.86);
+  ctx.fillStyle = COL.stage; ctx.fillRect(0, 0, w, h);
+  const PUR = "#B189C6";
+  // --- number line strip ---
+  const x0 = 44, x1 = w - 30, ny = h * 0.2, lo = 2.6, hi = 4.2;
+  const X = (v) => x0 + ((Math.min(Math.max(v, lo), hi) - lo) / (hi - lo)) * (x1 - x0);
+  ctx.strokeStyle = "rgba(239,235,225,0.5)"; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(x0, ny); ctx.lineTo(x1, ny); ctx.stroke();
+  ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillStyle = COL.faint;
+  for (let v = 2.6; v <= 4.2001; v += 0.2) {
+    ctx.beginPath(); ctx.moveTo(X(v), ny - 4); ctx.lineTo(X(v), ny + 4); ctx.stroke();
+    if (Math.abs((v * 10) % 4 - 2) < 0.01 || Math.abs(v - 2.6) < 0.01) ctx.fillText(v.toFixed(1), X(v), ny + 8);
+  }
+  ctx.strokeStyle = COL.yellow; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(X(Math.PI), ny - 12); ctx.lineTo(X(Math.PI), ny + 12); ctx.stroke();
+  ctx.fillStyle = COL.yellow; ctx.font = "italic 16px Fraunces, Georgia, serif"; ctx.textBaseline = "bottom"; ctx.fillText("π", X(Math.PI), ny - 13);
+  for (let k = Math.max(1, n - 24); k <= n; k++) {
+    const v = lbPartial(k), a = 0.15 + 0.6 * (1 - (n - k) / 25);
+    ctx.strokeStyle = v > Math.PI ? `rgba(131,193,103,${a})` : `rgba(252,98,85,${a})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(v), ny - 7); ctx.lineTo(X(v), ny + 7); ctx.stroke();
+  }
+  const cur = lbPartial(n);
+  ctx.fillStyle = cur > Math.PI ? COL.green : COL.red;
+  ctx.beginPath(); ctx.arc(X(cur), ny, 7, 0, 2 * Math.PI); ctx.fill();
+  // --- zigzag chart ---
+  const cl = 44, cr = w - 24, ct = h * 0.36, cb = h - 34;
+  const nmax = Math.max(n, 2);
+  const CX = (k) => cl + ((k - 1) / (nmax - 1)) * (cr - cl);
+  const CY = (v) => cb - ((Math.min(Math.max(v, lo), hi) - lo) / (hi - lo)) * (cb - ct);
+  ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (const v of [2.6, 3.0, 3.4, 3.8, 4.2]) {
+    ctx.strokeStyle = "rgba(239,235,225,0.06)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cl, CY(v)); ctx.lineTo(cr, CY(v)); ctx.stroke();
+    ctx.fillStyle = COL.faint; ctx.fillText(v.toFixed(1), cl - 6, CY(v));
+  }
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = COL.yellow; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(cl, CY(Math.PI)); ctx.lineTo(cr, CY(Math.PI)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = COL.faint;
+  ctx.fillText("1", cl, cb + 8); ctx.textAlign = "right"; ctx.fillText(fmtInt(nmax) + t(" terms", " 项"), cr, cb + 8);
+  const step = Math.max(1, Math.floor(n / 1500));
+  ctx.beginPath();
+  for (let k = 1; k <= n; k += step) { const px = CX(k), py = CY(lbPartial(k)); if (k === 1) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+  ctx.strokeStyle = PUR; ctx.lineWidth = n > 200 ? 0.8 : 1.6; ctx.stroke();
+  if (n <= 40) for (let k = 1; k <= n; k++) {
+    const v = lbPartial(k); ctx.fillStyle = v > Math.PI ? COL.green : COL.red;
+    ctx.beginPath(); ctx.arc(CX(k), CY(v), 3.5, 0, 2 * Math.PI); ctx.fill();
+  }
+  if (L.avg && n >= 2) {
+    ctx.beginPath();
+    for (let k = 1; k < n; k += step) { const px = (CX(k) + CX(k + 1)) / 2, py = CY((lbPartial(k) + lbPartial(k + 1)) / 2); if (k === 1) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+    ctx.strokeStyle = COL.yellow; ctx.lineWidth = 2.2; ctx.stroke();
+  }
+  // big counter
+  ctx.textAlign = "right"; ctx.textBaseline = "top";
+  ctx.font = "500 11px 'IBM Plex Mono', monospace"; ctx.fillStyle = COL.muted; ctx.fillText(t("TERMS", "项数"), w - 20, ct - 2);
+  ctx.font = `300 ${Math.round(h * 0.1)}px Fraunces, Georgia, serif`; ctx.fillStyle = "rgba(239,235,225,0.9)";
+  ctx.fillText(fmtInt(n), w - 18, ct + 12);
+  // readouts
+  const k = n - 1;
+  $("lb-est").innerHTML = piDigits(cur);
+  $("lb-n-out").textContent = fmtInt(n);
+  $("lb-n-cap").textContent = fmtInt(n);
+  $("lb-term").textContent = n === 1 ? "1" : `${k % 2 ? "−" : "+"} 1/${2 * k + 1}`;
+  $("lb-err").textContent = Math.abs(cur - Math.PI).toFixed(n >= 1000 ? 5 : 4);
+  $("lb-avg").textContent = n < LB_MAX ? ((cur + lbPartial(n + 1)) / 2).toFixed(4) : "–";
+  document.querySelectorAll("#leibniz [data-lb]").forEach((b) => b.classList.toggle("on", +b.dataset.lb === n));
+}
+function setLB(n) { L.n = Math.min(Math.max(1, n), LB_MAX); lbSl.value = lbToSlider(L.n); paintRange(lbSl); drawLB(); }
+function stopLBPlay() { if (L.playing) { clearTimeout(L.playing); L.playing = null; $("lb-play").textContent = t("Play from 1", "从 1 项开始播放"); } }
+lbSl.addEventListener("input", () => { stopLBPlay(); L.n = lbFromSlider(+lbSl.value); drawLB(); });
+document.querySelectorAll("#leibniz [data-lb]").forEach((b) => b.addEventListener("click", () => { stopLBPlay(); setLB(+b.dataset.lb); }));
+$("lb-add").addEventListener("click", () => { stopLBPlay(); setLB(L.n + 1); });
+$("lb-avg-on").addEventListener("change", (e) => { L.avg = e.target.checked; drawLB(); });
+$("lb-play").addEventListener("click", () => {
+  if (L.playing) { stopLBPlay(); return; }
+  $("lb-play").textContent = t("Stop", "停止");
+  let n = 1; setLB(1);
+  const tick = () => {
+    n = n < 12 ? n + 1 : Math.ceil(n * 1.12);
+    if (n > LB_MAX) { setLB(LB_MAX); stopLBPlay(); return; }
+    setLB(n);
+    L.playing = setTimeout(tick, REDUCE ? 200 : (n < 12 ? 550 : 140));
+  };
+  L.playing = setTimeout(tick, 550);
+});
+
+
+/* =========================================================
+   05 THE RACE  (all four methods, same number of steps)
+   ========================================================= */
+const RACE_MAX = 10000;
+const RK = ["ar", "mc", "bf", "lb"];
+const RCOL = { ar: COL.blue, mc: COL.green, bf: COL.red, lb: "#B189C6" };
+const RNAME = () => ({ ar: t("Polygons", "多边形"), mc: t("Dots", "投点"), bf: t("Needles", "投针"), lb: t("Fractions", "级数") });
+const R = { steps: 0, mcIn: 0, bfC: 0, lbAcc: 0, hist: null, running: false, t0: 0, raf: 0, guide: true };
+const raceCv = $("race-canvas"), raceSpeed = $("race-speed");
+const speedVal = () => Math.pow(4, (+raceSpeed.value - 50) / 50) ; // ×0.25 … ×4
+function raceReset() { Object.assign(R, { steps: 0, mcIn: 0, bfC: 0, lbAcc: 0, hist: { ar: [], mc: [], bf: [], lb: [] } }); }
+function raceAdvance(target) {
+  while (R.steps < target) {
+    const k = R.steps;
+    const x = Math.random() * 2 - 1, y = Math.random() * 2 - 1;
+    if (x * x + y * y <= 1) R.mcIn++;
+    const cy = Math.random(), th = Math.random() * Math.PI, hh = 0.5 * Math.sin(th);
+    if (Math.floor(cy + hh) !== Math.floor(cy - hh)) R.bfC++;
+    R.lbAcc += (k % 2 ? -1 : 1) / (2 * k + 1);
+    R.steps++;
+  }
+}
+function raceEst() {
+  const n = R.steps;
+  const sides = Math.max(3, n);
+  return {
+    ar: sides * Math.sin(Math.PI / sides),
+    mc: n ? (4 * R.mcIn) / n : NaN,
+    bf: R.bfC ? (2 * n) / R.bfC : NaN,
+    lb: 4 * R.lbAcc,
+  };
+}
+function raceRecord() {
+  const e = raceEst();
+  for (const k of RK) {
+    if (!Number.isFinite(e[k])) continue;
+    const h = R.hist[k];
+    if (h.length && h[h.length - 1][0] === R.steps) h[h.length - 1][1] = Math.abs(e[k] - Math.PI);
+    else h.push([R.steps, Math.abs(e[k] - Math.PI)]);
+  }
+}
+function correctDecimals(v) {
+  if (!Number.isFinite(v)) return 0;
+  let d = 0;
+  for (let k = 1; k <= 7; k++) { if (Math.floor(v * 10 ** k) === Math.floor(Math.PI * 10 ** k)) d = k; else break; }
+  return Math.floor(v) === 3 ? d : 0;
+}
+function raceDigits(v) {
+  if (!Number.isFinite(v)) return "–";
+  const s = v.toFixed(7), d = correctDecimals(v), keep = d > 0 ? d + 2 : (Math.floor(v) === 3 ? 1 : 0);
+  return `<span class="ok">${s.slice(0, keep)}</span><span class="no">${s.slice(keep)}</span>`;
+}
+document.querySelectorAll(".digbar").forEach((b) => { b.innerHTML = "<i></i>".repeat(7); });
+function drawRace() {
+  const { ctx, w, h } = fit(raceCv, 0.86);
+  ctx.fillStyle = COL.stage; ctx.fillRect(0, 0, w, h);
+  const pl = 78, pr = 96, pt = 52, pb = 54;
+  const ymin = -8, ymax = 0.6;
+  const X = (n) => pl + (Math.log10(Math.max(n, 1)) / 4) * (w - pl - pr);
+  const Y = (err) => { const l = Math.log10(Math.max(err, 1e-8)); return pt + (1 - (Math.min(l, ymax) - ymin) / (ymax - ymin)) * (h - pt - pb); };
+  ctx.font = "10px 'IBM Plex Mono', monospace";
+  const ylab = { 0: "1", "-2": "0.01", "-4": "0.0001", "-6": "10⁻⁶", "-8": "10⁻⁸" };
+  for (let l = 0; l >= -8; l -= 1) {
+    ctx.strokeStyle = l % 2 === 0 ? "rgba(239,235,225,0.08)" : "rgba(239,235,225,0.03)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pl, Y(10 ** l)); ctx.lineTo(w - pr, Y(10 ** l)); ctx.stroke();
+    if (l % 2 === 0) { ctx.fillStyle = COL.faint; ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(ylab[l], pl - 8, Y(10 ** l)); }
+  }
+  for (let e = 0; e <= 4; e++) {
+    const x = X(10 ** e);
+    ctx.strokeStyle = "rgba(239,235,225,0.06)"; ctx.beginPath(); ctx.moveTo(x, pt); ctx.lineTo(x, h - pb); ctx.stroke();
+    ctx.fillStyle = COL.faint; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(fmtInt(10 ** e), x, h - pb + 8);
+  }
+  ctx.fillStyle = COL.muted; ctx.textAlign = "center"; ctx.font = "11px 'IBM Plex Sans', sans-serif";
+  ctx.fillText(t("steps: sides · dots · needles · terms", "步数：边数 · 点数 · 针数 · 项数"), (pl + w - pr) / 2, h - pb + 26);
+  ctx.save(); ctx.translate(14, (pt + h - pb) / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(t("error  |estimate − π|", "误差 |估计值 − π|"), 0, 0); ctx.restore();
+  // typical-error guides for the chance methods
+  if (R.guide) {
+    for (const [k, c] of [["mc", 1.642], ["bf", 2.374]]) {
+      ctx.setLineDash([5, 5]); ctx.strokeStyle = RCOL[k] + "66"; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (let i = 0; i <= 40; i++) { const n = 10 ** (4 * i / 40); const px = X(n), py = Y(c / Math.sqrt(n)); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  // lines
+  const labels = [];
+  for (const k of RK) {
+    const hst = R.hist[k]; if (hst.length < 1) continue;
+    ctx.beginPath();
+    hst.forEach(([n, e], i) => { const px = X(n), py = Y(e); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); });
+    ctx.strokeStyle = RCOL[k]; ctx.lineWidth = 2.2; ctx.lineJoin = "round"; ctx.stroke();
+    const [ln, le] = hst[hst.length - 1];
+    ctx.fillStyle = RCOL[k]; ctx.beginPath(); ctx.arc(X(ln), Y(le), 4, 0, 2 * Math.PI); ctx.fill();
+    labels.push({ k, x: X(ln), y: Y(le) });
+  }
+  // end labels, nudged apart
+  labels.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 16) labels[i].y = labels[i - 1].y + 16;
+  ctx.font = "500 12px 'IBM Plex Sans', sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  const names = RNAME(); for (const L2 of labels) { ctx.fillStyle = RCOL[L2.k]; ctx.fillText(names[L2.k], L2.x + 10, L2.y); }
+  // step counter
+  ctx.textAlign = "right"; ctx.textBaseline = "top";
+  ctx.font = "500 11px 'IBM Plex Mono', monospace"; ctx.fillStyle = COL.muted; ctx.fillText(t("STEPS", "步数"), w - 20, 16);
+  ctx.font = `300 ${Math.round(h * 0.08)}px Fraunces, Georgia, serif`; ctx.fillStyle = "rgba(239,235,225,0.9)";
+  ctx.fillText(fmtInt(R.steps), w - 18, 30);
+  // standings
+  const est = raceEst();
+  const order = RK.slice().sort((a, b) => {
+    const ea = Number.isFinite(est[a]) ? Math.abs(est[a] - Math.PI) : 9, eb = Number.isFinite(est[b]) ? Math.abs(est[b] - Math.PI) : 9;
+    return ea - eb;
+  });
+  for (const k of RK) {
+    const lane = $("lane-" + k), place = order.indexOf(k) + 1;
+    lane.querySelector(".rank").textContent = place;
+    lane.classList.toggle("lead", place === 1);
+    lane.style.order = place;
+    $("race-" + k).innerHTML = raceDigits(est[k]);
+    const d = correctDecimals(est[k]);
+    lane.querySelectorAll(".digbar i").forEach((el, i) => el.classList.toggle("on", i < d));
+  }
+}
+function raceInstant() {
+  raceReset();
+  for (let i = 0; i <= 240; i++) { raceAdvance(Math.round(10 ** (4 * i / 240))); raceRecord(); }
+  drawRace();
+}
+function raceFrame(now) {
+  const dur = 14000 / speedVal();
+  const tt = Math.min(1, (now - R.t0) / dur);
+  raceAdvance(Math.round(10 ** (4 * tt)));
+  raceRecord(); drawRace();
+  if (tt < 1 && R.running) R.raf = requestAnimationFrame(raceFrame);
+  else { R.running = false; $("race-go").textContent = t("Run it again", "再跑一次"); }
+}
+$("race-go").addEventListener("click", () => {
+  if (R.running) { R.running = false; cancelAnimationFrame(R.raf); $("race-go").textContent = t("Run it again", "再跑一次"); return; }
+  if (REDUCE) { raceInstant(); return; }
+  raceReset(); R.running = true; R.everRan = true; $("race-go").textContent = t("Stop", "停止");
+  R.t0 = performance.now(); R.raf = requestAnimationFrame(raceFrame);
+});
+raceSpeed.addEventListener("input", () => {
+  // keep progress when the speed changes mid-race
+  if (R.running) { const now = performance.now(); const tOld = Math.log10(Math.max(R.steps, 1)) / 4; R.t0 = now - tOld * (14000 / speedVal()); }
+  $("race-speed-out").textContent = "×" + speedVal().toFixed(1);
+});
+$("race-guide").addEventListener("change", (e) => { R.guide = e.target.checked; drawRace(); });
+
+/* =========================================================
+   QUIZ ENGINE
+   generator → { q, type: "mc"|"num", options?, answer, tol?, show?, hint, hint2?, explain, action?, keepOrder? }
+   ========================================================= */
+function makeQuiz(rootId, gens, navId) {
+  const root = $(rootId);
+  const qText = root.querySelector(".q-text"), opts = root.querySelector(".q-options");
+  const form = root.querySelector(".q-num"), input = form.querySelector("input");
+  const fb = root.querySelector(".q-feedback"), btnReveal = root.querySelector(".q-reveal");
+  const btnNext = root.querySelector(".q-next"), count = root.querySelector(".q-count");
+  const elScore = root.querySelector(".q-score"), elStreak = root.querySelector(".q-streak"), elNo = root.querySelector(".q-no");
+  let cur = null, last = -1, tries = 0, done = false, score = 0, streak = 0, num = 0, timer = null;
+
+  function feedback(kind, html, action) {
+    fb.innerHTML = "";
+    const box = document.createElement("div"); box.className = "box " + kind; box.innerHTML = html;
+    if (action) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "act"; b.textContent = action.label;
+      b.addEventListener("click", action.run); box.appendChild(b);
+    }
+    fb.appendChild(box);
+  }
+  function next() {
+    let i; do { i = Math.floor(Math.random() * gens.length); } while (gens.length > 1 && i === last);
+    last = i; num++;
+    show();
+  }
+  function show() {
+    clearTimeout(timer); count.innerHTML = "";
+    cur = gens[last](); tries = 0; done = false;
+    elNo.textContent = String(num).padStart(2, "0");
+    qText.innerHTML = cur.q;
+    fb.innerHTML = ""; btnReveal.hidden = true; btnNext.hidden = true; opts.innerHTML = "";
+    if (cur.type === "mc") {
+      form.hidden = true; opts.hidden = false;
+      const list = cur.keepOrder ? cur.options.slice() : cur.options.slice().sort(() => Math.random() - 0.5);
+      list.forEach((o, k) => {
+        const b = document.createElement("button"); b.type = "button"; b.dataset.val = o;
+        b.innerHTML = `<span class="key">${"ABCD"[k]}</span><span>${o}</span>`;
+        b.addEventListener("click", () => check(o, b)); opts.appendChild(b);
+      });
+    } else {
+      opts.hidden = true; form.hidden = false; input.value = ""; input.disabled = false;
+      form.querySelector("button").disabled = false;
+    }
+  }
+  function finish(success) {
+    done = true;
+    opts.querySelectorAll("button").forEach((b) => { b.disabled = true; if (b.dataset.val === cur.answer) b.classList.add("right"); });
+    input.disabled = true; form.querySelector("button").disabled = true;
+    btnReveal.hidden = true; btnNext.hidden = false;
+    if (success) {
+      score++; streak++;
+      count.innerHTML = t("next problem", "下一题") + `<span class="bar-t"><i></i></span>`;
+      timer = setTimeout(next, 4000);
+    } else streak = 0;
+    elScore.textContent = score; elStreak.textContent = streak; $(navId).textContent = score;
+  }
+  function check(val, btn) {
+    if (done) return;
+    let ok;
+    if (cur.type === "mc") ok = val === cur.answer;
+    else {
+      const x = parseFloat(String(val).replace(",", ".").trim());
+      if (Number.isNaN(x)) { feedback("info", t("Type a number, for example <b>3.14</b>.", "请输入一个数字，例如 <b>3.14</b>。")); return; }
+      ok = Math.abs(x - cur.answer) <= (cur.tol ?? 0.006);
+    }
+    if (ok) { feedback("good", `<strong>${t("Correct.", "答对了！")}</strong> <span>${cur.explain}</span>`); finish(true); }
+    else {
+      tries++; streak = 0; elStreak.textContent = 0;
+      if (btn) { btn.classList.add("wrong"); btn.disabled = true; }
+      const hint = tries >= 2 && cur.hint2 ? cur.hint2 : cur.hint;
+      feedback("bad", `<strong>${t("Not quite.", "不太对。")}</strong> <span>${t("Hint: ", "提示：")}${hint}</span>`, cur.action);
+      if (tries >= 2) btnReveal.hidden = false;
+    }
+  }
+  form.addEventListener("submit", (e) => { e.preventDefault(); check(input.value, null); });
+  btnReveal.addEventListener("click", () => {
+    const ans = cur.type === "mc" ? cur.answer : (cur.show ?? String(cur.answer));
+    feedback("info", `<strong>${t("Answer: ", "答案：")}${ans}</strong> <span>${cur.explain}</span>`); finish(false);
+  });
+  btnNext.addEventListener("click", next);
+  next();
+  return { regen: () => show() };
+}
+
+const r2 = (x) => Math.round(x * 100) / 100;
+const goTo = (id) => $(id).scrollIntoView({ behavior: REDUCE ? "auto" : "smooth", block: "center" });
+
+/* ---------- Archimedes problems ---------- */
+const archQs = [
+  () => {
+    const n = pick([8, 9, 10, 15, 18, 20, 30, 36, 40, 60, 72, 90]); const v = lowerB(n);
+    return { type: "num", answer: r2(v), show: v.toFixed(2),
+      q: t(`Set the lab to <b>n = ${n}</b> sides. What <b>lower bound</b> does the inscribed polygon give? Answer to 2 decimal places.`,
+           `把实验区调到 <b>n = ${n}</b> 条边。内接多边形给出的<b>下界</b>是多少？保留 2 位小数。`),
+      hint: t(`read the blue number after moving the slider to ${n}, or compute ${n} × sin(180° ÷ ${n}).`,
+              `把滑块拖到 ${n}，读蓝色的数字；或者计算 ${n} × sin(180° ÷ ${n})。`),
+      explain: t(`The inscribed ${n}-gon has perimeter ${n} × sin(180°/${n}) ≈ ${v.toFixed(4)}, so π > ${v.toFixed(4)}.`,
+                 `内接正 ${n} 边形的周长是 ${n} × sin(180°/${n}) ≈ ${v.toFixed(4)}，所以 π > ${v.toFixed(4)}。`),
+      action: { label: t(`Set the lab to n = ${n}`, `把实验区调到 n = ${n}`), run: () => { stopArchPlay(); setN(n); goTo("arch-canvas"); } } };
+  },
+  () => {
+    const n = pick([8, 10, 12, 16, 20, 24, 30, 45, 60, 80]); const v = upperB(n);
+    return { type: "num", answer: r2(v), show: v.toFixed(2),
+      q: t(`Set the lab to <b>n = ${n}</b> sides. What <b>upper bound</b> does the circumscribed polygon give? Answer to 2 decimal places.`,
+           `把实验区调到 <b>n = ${n}</b> 条边。外切多边形给出的<b>上界</b>是多少？保留 2 位小数。`),
+      hint: t(`read the red number at n = ${n}, or compute ${n} × tan(180° ÷ ${n}).`,
+              `在 n = ${n} 时读红色的数字；或者计算 ${n} × tan(180° ÷ ${n})。`),
+      explain: t(`The circumscribed ${n}-gon has perimeter ${n} × tan(180°/${n}) ≈ ${v.toFixed(4)}, so π < ${v.toFixed(4)}.`,
+                 `外切正 ${n} 边形的周长是 ${n} × tan(180°/${n}) ≈ ${v.toFixed(4)}，所以 π < ${v.toFixed(4)}。`),
+      action: { label: t(`Set the lab to n = ${n}`, `把实验区调到 n = ${n}`), run: () => { stopArchPlay(); setN(n); goTo("arch-canvas"); } } };
+  },
+  () => {
+    const inner = Math.random() < 0.5;
+    const opts = [t("a lower bound", "下界"), t("an upper bound", "上界"), t("the exact value", "精确值"), t("no information", "什么也给不出")];
+    return { type: "mc", answer: inner ? opts[0] : opts[1], options: opts,
+      q: inner ? t("The <b>inscribed</b> polygon's perimeter gives π…", "<b>内接</b>多边形的周长给出了 π 的……")
+               : t("The <b>circumscribed</b> polygon's perimeter gives π…", "<b>外切</b>多边形的周长给出了 π 的……"),
+      hint: inner ? t("is the inside polygon shorter or longer than the circle? Look at the lab picture.", "圆里面的多边形比圆短还是长？看看实验区的图。")
+                  : t("is the outside polygon shorter or longer than the circle? Look at the lab picture.", "圆外面的多边形比圆短还是长？看看实验区的图。"),
+      explain: inner ? t("The inside polygon cuts corners, so it is shorter than the circle: π is bigger than its perimeter.", "内接多边形“抄近路”，比圆短，所以 π 比它的周长大。")
+                     : t("The outside polygon wraps around the circle, so it is longer: π is smaller than its perimeter.", "外切多边形包在圆外，比圆长，所以 π 比它的周长小。") };
+  },
+  () => ({ type: "num", answer: 3, tol: 0.001,
+    q: t("A circle has diameter 1. What is the perimeter of the regular hexagon drawn <b>inside</b> it?", "一个圆的直径是 1。画在它<b>里面</b>的正六边形周长是多少？"),
+    hint: t("the hexagon splits into 6 equilateral triangles. Each side equals the radius.", "正六边形可以分成 6 个等边三角形，每条边都等于半径。"),
+    hint2: t("the radius is ½, so each of the 6 sides is ½.", "半径是 ½，所以 6 条边每条都是 ½。"),
+    explain: t("6 sides × ½ = 3, which is why π > 3.", "6 条边 × ½ = 3，所以 π > 3。") }),
+  () => {
+    const start = pick([6, 12]); const end = start === 6 ? pick([48, 96]) : pick([96, 192]);
+    const steps = Math.log2(end / start);
+    const chain = Array.from({ length: steps + 1 }, (_, i) => start * 2 ** i).join(" → ");
+    return { type: "num", answer: steps, tol: 0.001,
+      q: t(`Archimedes doubled the sides at each step. How many doublings take you from <b>${start}</b> sides to <b>${end}</b> sides?`,
+           `阿基米德每一步都把边数加倍。从 <b>${start}</b> 条边到 <b>${end}</b> 条边，需要加倍几次？`),
+      hint: t(`write out the chain ${start} → ${start * 2} → … and count the arrows.`, `写出 ${start} → ${start * 2} → …，数一数有几个箭头。`),
+      explain: t(`${chain}: that is ${steps} doublings.`, `${chain}：一共加倍 ${steps} 次。`) };
+  },
+  () => {
+    const n = pick([6, 12, 24, 48]);
+    const opts = [t("about 2 times smaller", "缩小到约 1/2"), t("about 4 times smaller", "缩小到约 1/4"), t("about 10 times smaller", "缩小到约 1/10"), t("it stays the same", "保持不变")];
+    const g1 = (upperB(n) - lowerB(n)).toFixed(4), g2 = (upperB(2 * n) - lowerB(2 * n)).toFixed(4);
+    return { type: "mc", answer: opts[1], options: opts,
+      q: t(`When the sides double from <b>${n}</b> to <b>${2 * n}</b>, what happens to the gap between the bounds?`,
+           `边数从 <b>${n}</b> 加倍到 <b>${2 * n}</b> 时，上下界之间的差距会怎样？`),
+      hint: t(`put the lab on n = ${n}, note the gap, then switch to ${2 * n} and divide.`, `把实验区调到 n = ${n}，记下差距，再换成 ${2 * n}，两者相除。`),
+      explain: t(`Gap at ${n}: ${g1}; at ${2 * n}: ${g2}. Doubling the sides makes the gap about 4 times smaller.`,
+                 `${n} 条边时差距 ${g1}，${2 * n} 条边时差距 ${g2}。边数加倍，差距缩小到约四分之一。`),
+      action: { label: t(`Set the lab to n = ${n}`, `把实验区调到 n = ${n}`), run: () => { stopArchPlay(); setN(n); goTo("arch-canvas"); } } };
+  },
+  () => ({ type: "mc", answer: "96", options: ["24", "48", "96", "192"], keepOrder: true,
+    q: t("What is the smallest of these numbers of sides where <b>both</b> bounds round to 3.14?", "下面哪个边数最小，能让上下界<b>都</b>四舍五入成 3.14？"),
+    hint: t(`try each value in the lab and read "Both bounds agree on".`, "在实验区逐个试一试，看“两个界一致的位数”。"),
+    explain: t("At 48 sides the upper bound is 3.1461, which rounds to 3.15. At 96 sides: 3.1410 and 3.1427, both 3.14. That is exactly where Archimedes stopped.",
+               "48 条边时上界是 3.1461，四舍五入是 3.15。96 条边时是 3.1410 和 3.1427，都是 3.14。阿基米德正是停在这里。") }),
+];
+
+/* ---------- Monte Carlo problems ---------- */
+const mcQs = [
+  () => {
+    const N = pick([200, 400, 500, 800, 1000, 2000, 2500, 4000]);
+    const k = Math.round(N * Math.PI / 4 + rand(-0.025, 0.025) * N); const v = (4 * k) / N;
+    return { type: "num", answer: r2(v), show: v.toFixed(2),
+      q: t(`You threw <b>${fmtInt(N)}</b> dots and <b>${fmtInt(k)}</b> landed inside the circle. Estimate π to 2 decimal places.`,
+           `你投了 <b>${fmtInt(N)}</b> 个点，其中 <b>${fmtInt(k)}</b> 个落在圆内。估算 π，保留 2 位小数。`),
+      hint: t("π ≈ 4 × inside ÷ total.", "π ≈ 4 × 圆内点数 ÷ 总点数。"), explain: `4 × ${k} ÷ ${N} = ${v.toFixed(4)}.` };
+  },
+  () => {
+    let x, y, s; do { x = r2(rand(-1, 1)); y = r2(rand(-1, 1)); s = x * x + y * y; } while (Math.abs(s - 1) < 0.06);
+    const inside = s <= 1;
+    const opts = [t("Inside the circle", "在圆内"), t("Outside the circle", "在圆外")];
+    return { type: "mc", answer: inside ? opts[0] : opts[1], options: opts, keepOrder: true,
+      q: t(`A dot lands at <b>(${x}, ${y})</b>. Is it inside the circle of radius 1?`, `一个点落在 <b>(${x}, ${y})</b>。它在半径为 1 的圆内吗？`),
+      hint: t("work out x² + y² and compare it with 1.", "算出 x² + y²，和 1 比较。"),
+      explain: inside ? t(`${x}² + ${y}² = ${s.toFixed(4)}, which is ≤ 1, so it is inside.`, `${x}² + ${y}² = ${s.toFixed(4)} ≤ 1，所以在圆内。`)
+                      : t(`${x}² + ${y}² = ${s.toFixed(4)}, which is > 1, so it is outside.`, `${x}² + ${y}² = ${s.toFixed(4)} > 1，所以在圆外。`) };
+  },
+  () => {
+    const opts = [t("The circle covers π/4 of the square", "圆的面积是正方形的 π/4"), t("The square has 4 corners", "正方形有 4 个角"), t("π is close to 4", "π 接近 4"), t("Each dot is counted 4 times", "每个点被数了 4 次")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t("Why do we multiply the fraction of dots inside by <b>4</b>?", "为什么要把圆内点所占的比例乘以 <b>4</b>？"),
+      hint: t("compare the two areas: the square has side 2, the circle has radius 1.", "比较两个面积：正方形边长是 2，圆的半径是 1。"),
+      explain: t("Square area = 4, circle area = π. The fraction inside approaches π/4, so π ≈ 4 × fraction.", "正方形面积 = 4，圆面积 = π。圆内比例趋近 π/4，所以 π ≈ 4 × 比例。") };
+  },
+  () => {
+    const opts = [t("about 2 times more", "约 2 倍"), t("about 10 times more", "约 10 倍"), t("about 100 times more", "约 100 倍"), t("about 1000 times more", "约 1000 倍")];
+    return { type: "mc", answer: opts[2], options: opts,
+      q: t("To get <b>one more correct digit</b> of π, roughly how many more dots do you need?", "想让 π <b>多一位准确数字</b>，大约需要多投几倍的点？"),
+      hint: t("the error shrinks like 1 ÷ √n. What must n be multiplied by to make √n ten times bigger?", "误差大约是 1 ÷ √n。n 要乘以多少，√n 才会变成 10 倍？"),
+      explain: t("Error ∝ 1/√n. Ten times smaller error needs √n ten times bigger, so n must be 100 times bigger.", "误差 ∝ 1/√n。误差缩小 10 倍需要 √n 变成 10 倍，也就是 n 变成 100 倍。") };
+  },
+  () => ({ type: "num", answer: 0.79, tol: 0.008, show: t("0.79 (π/4 ≈ 0.785)", "0.79（π/4 ≈ 0.785）"),
+    q: t("In the long run, what fraction of the dots lands inside the circle? Answer to 2 decimal places.", "长期来看，有多大比例的点落在圆内？保留 2 位小数。"),
+    hint: t("the fraction approaches circle area ÷ square area = π ÷ 4.", "这个比例趋近于圆面积 ÷ 正方形面积 = π ÷ 4。"),
+    explain: t("π ÷ 4 ≈ 0.785, so about 79% of the dots land inside.", "π ÷ 4 ≈ 0.785，所以约 79% 的点落在圆内。") }),
+  () => {
+    const N = pick([500, 1000, 2000]); const k = randint(Math.round(N * 0.2), Math.round(N * 0.7)); const v = (4 * k) / N;
+    return { type: "num", answer: r2(v), show: v.toFixed(2), tol: 0.011,
+      q: t(`A strange shape sits inside the same 2 × 2 square. Of <b>${fmtInt(N)}</b> random dots, <b>${fmtInt(k)}</b> land in the shape. Estimate its area.`,
+           `同一个 2 × 2 的正方形里有一个奇怪的形状。<b>${fmtInt(N)}</b> 个随机点中有 <b>${fmtInt(k)}</b> 个落在形状里。估算它的面积。`),
+      hint: t("the square's area is 4, so the shape's area ≈ 4 × (dots inside ÷ total).", "正方形面积是 4，所以形状面积 ≈ 4 × (形状内点数 ÷ 总点数)。"),
+      explain: t(`4 × ${k} ÷ ${N} = ${v.toFixed(2)}. Monte Carlo needs no formula for the shape.`, `4 × ${k} ÷ ${N} = ${v.toFixed(2)}。蒙特卡洛不需要这个形状的面积公式。`) };
+  },
+];
+
+/* ---------- Buffon problems ---------- */
+const bfQs = [
+  () => {
+    const N = pick([300, 500, 800, 1000, 1500, 2000]);
+    const C = Math.round((2 * N) / Math.PI + rand(-0.02, 0.02) * N); const v = (2 * N) / C;
+    return { type: "num", answer: r2(v), show: v.toFixed(2),
+      q: t(`With l = d, you dropped <b>${fmtInt(N)}</b> needles and <b>${fmtInt(C)}</b> crossed a line. Estimate π to 2 decimal places.`,
+           `在 l = d 时，你投了 <b>${fmtInt(N)}</b> 根针，其中 <b>${fmtInt(C)}</b> 根压线。估算 π，保留 2 位小数。`),
+      hint: t("when l = d, π ≈ 2 × needles ÷ crossings.", "当 l = d 时，π ≈ 2 × 针数 ÷ 压线数。"), explain: `2 × ${N} ÷ ${C} = ${v.toFixed(4)}.` };
+  },
+  () => {
+    let y, a, reach; do { y = r2(rand(0, 0.5)); a = randint(1, 17) * 10; reach = 0.5 * Math.sin(a * Math.PI / 180); } while (Math.abs(y - reach) < 0.04);
+    const hit = y <= reach;
+    const opts = [t("It crosses a line", "压线"), t("It does not cross", "不压线")];
+    return { type: "mc", answer: hit ? opts[0] : opts[1], options: opts, keepOrder: true,
+      q: t(`l = d = 1. A needle's centre is <b>y = ${y}</b> from the nearest line and it makes an angle of <b>θ = ${a}°</b> with the lines. Does it cross?`,
+           `l = d = 1。一根针的中点离最近的直线 <b>y = ${y}</b>，与直线的夹角 <b>θ = ${a}°</b>。它压线吗？`),
+      hint: t("it crosses when y ≤ (l ÷ 2) × sin θ. Compute 0.5 × sin θ.", "当 y ≤ (l ÷ 2) × sin θ 时压线。算一下 0.5 × sin θ。"),
+      explain: hit ? t(`0.5 × sin ${a}° = ${reach.toFixed(3)}. Since y = ${y} ≤ ${reach.toFixed(3)}, it crosses.`, `0.5 × sin ${a}° = ${reach.toFixed(3)}。因为 y = ${y} ≤ ${reach.toFixed(3)}，所以压线。`)
+                   : t(`0.5 × sin ${a}° = ${reach.toFixed(3)}. Since y = ${y} > ${reach.toFixed(3)}, it does not cross.`, `0.5 × sin ${a}° = ${reach.toFixed(3)}。因为 y = ${y} > ${reach.toFixed(3)}，所以不压线。`) };
+  },
+  () => ({ type: "mc", answer: "2/π ≈ 0.64", options: ["2/π ≈ 0.64", "1/2 = 0.50", "1/π ≈ 0.32", "π/4 ≈ 0.79"],
+    q: t("When the needle length equals the line spacing (l = d), what is the probability a needle crosses a line?", "当针长等于线距（l = d）时，针压线的概率是多少？"),
+    hint: t("the general formula is P = 2l ÷ (πd). Put l = d.", "一般公式是 P = 2l ÷ (πd)。代入 l = d。"),
+    explain: t("P = 2l/(πd) = 2/π ≈ 0.637. About 64% of needles cross.", "P = 2l/(πd) = 2/π ≈ 0.637，约 64% 的针会压线。") }),
+  () => {
+    const l = pick([0.5, 0.25, 0.8]); const p = (2 * l) / Math.PI;
+    const opts = [p.toFixed(2), ((2 * l) / 4).toFixed(2), (2 / Math.PI).toFixed(2), (l / Math.PI / 2).toFixed(2)];
+    return { type: "mc", answer: opts[0], options: [...new Set(opts)],
+      q: t(`The lines are d = 1 apart and the needle is shorter: <b>l = ${l}</b>. What is the crossing probability?`, `线距 d = 1，针更短了：<b>l = ${l}</b>。压线的概率是多少？`),
+      hint: t("use P = 2l ÷ (πd).", "用 P = 2l ÷ (πd)。"),
+      explain: t(`P = 2 × ${l} ÷ π ≈ ${p.toFixed(3)}. Shorter needles cross less often.`, `P = 2 × ${l} ÷ π ≈ ${p.toFixed(3)}。针越短，压线越少。`),
+      action: { label: t(`Set the lab to l = ${l}`, `把实验区调到 l = ${l}`), run: () => { bfL.value = l; bfL.dispatchEvent(new Event("input")); goTo("bf-canvas"); } } };
+  },
+  () => {
+    const l = pick([0.5, 0.6, 0.8]); const N = pick([500, 1000, 2000]);
+    const C = Math.round((2 * l * N) / Math.PI + rand(-0.02, 0.02) * N * l); const v = (2 * l * N) / C;
+    return { type: "num", answer: r2(v), show: v.toFixed(2),
+      q: t(`Needle length <b>l = ${l}</b>, spacing d = 1. Of <b>${fmtInt(N)}</b> needles, <b>${fmtInt(C)}</b> crossed. Estimate π to 2 decimal places.`,
+           `针长 <b>l = ${l}</b>，线距 d = 1。<b>${fmtInt(N)}</b> 根针中有 <b>${fmtInt(C)}</b> 根压线。估算 π，保留 2 位小数。`),
+      hint: t("flip P = 2l ÷ (πd): π ≈ 2l × needles ÷ (d × crossings).", "把 P = 2l ÷ (πd) 反过来：π ≈ 2l × 针数 ÷ (d × 压线数)。"),
+      explain: `2 × ${l} × ${N} ÷ ${C} = ${v.toFixed(4)}.` };
+  },
+  () => ({ type: "mc", answer: "y ≤ (l/2) · sin θ", options: ["y ≤ (l/2) · sin θ", "y ≥ (l/2) · sin θ", "y ≤ l · cos θ", "θ ≤ y"],
+    q: t("y is the distance from the needle's centre to the nearest line, θ its angle with the lines. When does the needle cross?", "y 是针的中点到最近直线的距离，θ 是针与直线的夹角。针什么时候压线？"),
+    hint: t("how high does half of the needle reach above its centre? That height uses sin θ.", "半根针能比中点高出多少？这个高度要用到 sin θ。"),
+    explain: t("Half the needle reaches (l/2)·sin θ upward. It touches the line when that reach is at least y.", "半根针向上能达到 (l/2)·sin θ，只要它不小于 y，针就碰到线。") }),
+  () => {
+    const opts = [t("Six correct digits from 3408 needles is far too lucky", "3408 根针就得到 6 位正确数字，运气好得不可能"), t("Needles cannot measure π", "针根本不能测 π"), t("He used the wrong formula", "他用错了公式"), t("3408 needles is too many", "3408 根针太多了")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t("In 1901 Lazzarini reported π ≈ 355/113 = 3.1415929 from 3408 needles. Why are mathematicians suspicious?", "1901 年，拉扎里尼说他用 3408 根针得到了 π ≈ 355/113 = 3.1415929。为什么数学家怀疑他？"),
+      hint: t("with a few thousand needles, how many digits does the lab usually get right?", "投几千根针，实验区通常能算对几位？"),
+      explain: t("A few thousand needles usually give only 1–2 correct decimals. He probably stopped when the numbers looked perfect.", "几千根针通常只能算对 1 到 2 位小数。他很可能是在数字最漂亮时停了下来。") };
+  },
+];
+
+/* ---------- Leibniz problems ---------- */
+const lbQs = [
+  () => {
+    const n = pick([2, 3, 4, 5]);
+    const terms = Array.from({ length: n }, (_, k) => (k === 0 ? "1" : `${k % 2 ? "−" : "+"} 1/${2 * k + 1}`)).join(" ");
+    const v = lbPartial(n);
+    return { type: "num", answer: r2(v), show: v.toFixed(2),
+      q: t(`Work out <b>4 × (${terms})</b>. Answer to 2 decimal places.`, `计算 <b>4 × (${terms})</b>，保留 2 位小数。`),
+      hint: t("add the fractions first (or use decimals: 1/3 ≈ 0.333, 1/5 = 0.2, 1/7 ≈ 0.143, 1/9 ≈ 0.111), then multiply by 4.",
+              "先把分数加起来（或用小数：1/3 ≈ 0.333，1/5 = 0.2，1/7 ≈ 0.143，1/9 ≈ 0.111），再乘以 4。"),
+      explain: t(`4 × (${terms}) ≈ ${v.toFixed(4)}. That is the lab's value for ${n} terms.`, `4 × (${terms}) ≈ ${v.toFixed(4)}，正是实验区 ${n} 项时的值。`),
+      action: { label: t(`Set the lab to ${n} terms`, `把实验区调到 ${n} 项`), run: () => { stopLBPlay(); setLB(n); goTo("lb-canvas"); } } };
+  },
+  () => {
+    const k = randint(3, 9);
+    const sign = k % 2 ? "−" : "+", d = 2 * k + 1;
+    const prev = `${(k - 1) % 2 ? "−" : "+"} 1/${2 * k - 1}`;
+    const opts = [`${sign} 1/${d}`, `${sign === "+" ? "−" : "+"} 1/${d}`, `${sign} 1/${d - 1}`, `${sign} 1/${2 * d}`];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t(`The series goes 1 − 1/3 + 1/5 − … What comes right after <b>${prev}</b>?`, `级数是 1 − 1/3 + 1/5 − …，紧跟在 <b>${prev}</b> 后面的是哪一项？`),
+      hint: t("the denominators are the odd numbers in order, and the signs alternate.", "分母依次是奇数，正负号交替出现。"),
+      explain: t(`After ${2 * k - 1} comes the next odd number, ${d}, and the sign flips: ${opts[0]}.`, `${2 * k - 1} 之后的奇数是 ${d}，符号也要翻转：${opts[0]}。`) };
+  },
+  () => {
+    const n = randint(5, 40);
+    const above = lbPartial(n) > Math.PI;
+    const opts = [t("Above π", "比 π 大"), t("Below π", "比 π 小")];
+    return { type: "mc", answer: above ? opts[0] : opts[1], options: opts, keepOrder: true,
+      q: t(`After <b>${n}</b> terms, is 4 × sum above or below π?`, `加到第 <b>${n}</b> 项时，4 × 和比 π 大还是小？`),
+      hint: t("watch the dot in the lab: does it land on the green side or the red side? Or check whether the last term was added or taken away.",
+              "看实验区的圆点落在绿色一侧还是红色一侧；或者想想最后一项是加还是减。"),
+      explain: above ? t(`With an odd number of terms the last step was an addition, so the sum overshoots: ${lbPartial(n).toFixed(4)}.`, `项数是奇数，最后一步是加法，所以超过 π：${lbPartial(n).toFixed(4)}。`)
+                     : t(`With an even number of terms the last step was a subtraction, so the sum undershoots: ${lbPartial(n).toFixed(4)}.`, `项数是偶数，最后一步是减法，所以低于 π：${lbPartial(n).toFixed(4)}。`),
+      action: { label: t(`Set the lab to ${n} terms`, `把实验区调到 ${n} 项`), run: () => { stopLBPlay(); setLB(n); goTo("lb-canvas"); } } };
+  },
+  () => {
+    const n = pick([10, 100, 1000, 10000]);
+    const ab = t("about ", "约 ");
+    const opts = [ab + (1 / n), ab + (10 / n), ab + (0.1 / n), ab + (1 / Math.sqrt(n)).toFixed(3)];
+    return { type: "mc", answer: opts[0], options: [...new Set(opts)],
+      q: t(`Roughly how far from π is 4 × sum after <b>${fmtInt(n)}</b> terms?`, `加到 <b>${fmtInt(n)}</b> 项时，4 × 和离 π 大约有多远？`),
+      hint: t("the error is about 1 ÷ n. Try 10 or 100 terms in the lab and read the error.", "误差大约是 1 ÷ n。在实验区试试 10 项或 100 项，看看误差。"),
+      explain: t(`The error is about 1/${fmtInt(n)} = ${1 / n}.`, `误差约为 1/${fmtInt(n)} = ${1 / n}。`) };
+  },
+  () => {
+    const e = pick([0.1, 0.01, 0.001]);
+    const opts = [String(1 / e), String(10 / e), String(Math.round(Math.sqrt(1 / e))), String(1 / (e * e))];
+    return { type: "mc", answer: opts[0], options: [...new Set(opts)],
+      q: t(`About how many terms do you need before the error drops below <b>${e}</b>?`, `大约要加多少项，误差才会小于 <b>${e}</b>？`),
+      hint: t(`the error is about 1 ÷ n, so solve 1 ÷ n = ${e}.`, `误差约为 1 ÷ n，解方程 1 ÷ n = ${e}。`),
+      explain: t(`1 ÷ n = ${e} gives n = ${1 / e}. Each extra digit costs ten times more terms.`, `由 1 ÷ n = ${e} 得 n = ${1 / e}。每多一位数字，就要多算十倍的项。`) };
+  },
+  () => ({ type: "mc", answer: "π/4", options: ["π/4", "π/2", "1", "π"],
+    q: t("What is the area under the curve <b>y = 1 ÷ (1 + x²)</b> between x = 0 and x = 1?", "曲线 <b>y = 1 ÷ (1 + x²)</b> 在 x = 0 到 x = 1 之间下方的面积是多少？"),
+    hint: t("it is linked to the 45° angle, because tan 45° = 1. What fraction of a half-turn (π) is 45°?", "它和 45° 角有关，因为 tan 45° = 1。45° 是半圈（π）的几分之几？"),
+    explain: t("The area equals the angle whose tangent is 1, which is 45° = π/4. That is why the series adds up to π/4.", "这个面积等于正切为 1 的角，也就是 45° = π/4。所以级数的和是 π/4。") }),
+  () => {
+    const p = pick([2, 4, 6, 8]);
+    const sup = { 2: "²", 4: "⁴", 6: "⁶", 8: "⁸" }[p];
+    const opts = [`1/${p + 1}`, `1/${p}`, `1/${p + 2}`, `${p}/${p + 1}`];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t(`What is the area under <b>y = x${sup}</b> between x = 0 and x = 1?`, `<b>y = x${sup}</b> 在 x = 0 到 x = 1 之间下方的面积是多少？`),
+      hint: t("the area under x² is 1/3 and under x⁴ is 1/5. Spot the pattern.", "x² 下方的面积是 1/3，x⁴ 下方是 1/5。找找规律。"),
+      explain: t(`The area under xⁿ from 0 to 1 is 1/(n + 1), so for x${sup} it is 1/${p + 1}. These areas are the fractions in the series.`,
+                 `xⁿ 在 0 到 1 之间的面积是 1/(n + 1)，所以 x${sup} 是 1/${p + 1}。级数里的分数正是这些面积。`) };
+  },
+  () => {
+    const n = randint(8, 20);
+    const a = lbPartial(n), b = lbPartial(n + 1), m = (a + b) / 2;
+    return { type: "num", answer: r2(m), show: m.toFixed(4),
+      q: t(`After ${n} terms, 4 × sum = <b>${a.toFixed(4)}</b>. After ${n + 1} terms it is <b>${b.toFixed(4)}</b>. What is their average, to 2 decimal places?`,
+           `${n} 项时 4 × 和 = <b>${a.toFixed(4)}</b>，${n + 1} 项时是 <b>${b.toFixed(4)}</b>。两者的平均值是多少？保留 2 位小数。`),
+      hint: t("add the two numbers and divide by 2.", "把两个数相加再除以 2。"),
+      explain: t(`(${a.toFixed(4)} + ${b.toFixed(4)}) ÷ 2 = ${m.toFixed(4)}, much closer to π than either sum on its own.`, `(${a.toFixed(4)} + ${b.toFixed(4)}) ÷ 2 = ${m.toFixed(4)}，比任何一个和都更接近 π。`) };
+  },
+  () => {
+    const opts = [t("Madhava of Sangamagrama, c. 1400", "马德哈瓦，约 1400 年"), t("Gottfried Leibniz, 1674", "莱布尼茨，1674 年"), t("Isaac Newton, 1666", "牛顿，1666 年"), t("Archimedes, c. 250 BC", "阿基米德，约公元前 250 年")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t("Who discovered this series <b>first</b>?", "谁<b>最早</b>发现了这个级数？"),
+      hint: t("the series is often called the Madhava–Leibniz series. Leibniz found it in 1674, but someone in India had it centuries earlier.",
+              "它常被称为马德哈瓦–莱布尼茨级数。莱布尼茨在 1674 年发现了它，但印度有人早了几百年。"),
+      explain: t("Madhava of the Kerala school in India found it around 1400. Leibniz rediscovered it in Europe in 1674.", "印度喀拉拉学派的马德哈瓦约在 1400 年发现了它，莱布尼茨在 1674 年于欧洲重新发现。") };
+  },
+];
+
+/* ---------- Race problems ---------- */
+const rcQs = [
+  () => {
+    const opts = [t("Polygons", "多边形"), t("Random dots", "随机投点"), t("Needles", "投针"), t("Fractions", "分数级数")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t("Which method's error shrinks the <b>fastest</b> as the steps increase?", "随着步数增加，哪种方法的误差缩小得<b>最快</b>？"),
+      hint: t("on the race chart, look for the steepest line.", "在比赛图上找最陡的那条线。"),
+      explain: t("The polygon error falls like 5/n², the series like 1/n, and the chance methods like 1/√n. Polygons win.", "多边形的误差按 5/n² 下降，级数按 1/n，随机方法按 1/√n。多边形获胜。") };
+  },
+  () => {
+    const opts = [t("Polygons", "多边形"), t("Random dots", "随机投点"), t("Needles", "投针"), t("Fractions", "分数级数")];
+    return { type: "mc", answer: opts[2], options: opts,
+      q: t("After 10,000 steps, which method is <b>usually</b> the least accurate?", "跑完 10,000 步后，哪种方法<b>通常</b>最不准确？"),
+      hint: t("compare the typical errors: 1.6/√n for dots and 2.4/√n for needles. The other two are much smaller.", "比较典型误差：投点是 1.6/√n，投针是 2.4/√n，另外两种小得多。"),
+      explain: t("Needles have the biggest typical error, about 2.4/√n ≈ 0.024 at 10,000 needles. Dots are a bit better, about 0.016.", "投针的典型误差最大，10,000 根时约 2.4/√n ≈ 0.024。投点稍好，约 0.016。") };
+  },
+  () => {
+    const f = pick([100, 10000]);
+    const opts = [t(`${Math.sqrt(f)} times smaller`, `缩小到 1/${Math.sqrt(f)}`), t(`${f} times smaller`, `缩小到 1/${f}`), t(`${f / 2} times smaller`, `缩小到 1/${f / 2}`), t("about the same", "差不多不变")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t(`For a chance method the error is about c ÷ √n. If you use <b>${f}×</b> more dots, the error becomes…`, `随机方法的误差约为 c ÷ √n。如果点数变成原来的 <b>${f} 倍</b>，误差会……`),
+      hint: `√(${f}) = ?`,
+      explain: t(`√${f} = ${Math.sqrt(f)}, so the error becomes about ${Math.sqrt(f)} times smaller.`, `√${f} = ${Math.sqrt(f)}，所以误差缩小到约 1/${Math.sqrt(f)}。`) };
+  },
+  () => {
+    const opts = [t("about 0.71 times (1/√2)", "约 0.71 倍（1/√2）"), t("half", "一半"), t("a quarter", "四分之一"), t("it does not change", "不变")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t("Doubling the polygon's sides makes its error 4 times smaller. What does doubling the number of <b>dots</b> do to the Monte Carlo error?",
+           "多边形边数加倍，误差缩小到四分之一。那么把<b>点数</b>加倍，蒙特卡洛的误差会变成多少？"),
+      hint: t("the error is about 1.6 ÷ √n. Replace n with 2n.", "误差约为 1.6 ÷ √n，把 n 换成 2n。"),
+      explain: t("1.6/√(2n) = (1/√2) × 1.6/√n ≈ 0.71 × the old error. That is why chance methods feel so slow.", "1.6/√(2n) = (1/√2) × 1.6/√n ≈ 原来误差的 0.71 倍。所以随机方法显得很慢。") };
+  },
+  () => {
+    const [e, n] = pick([[0.05, 10], [0.0005, 100], [0.000005, 1000]]);
+    return { type: "num", answer: n, tol: 0.5,
+      q: t(`The polygon error is about 5 ÷ n². How many sides n make the error about <b>${e}</b>?`, `多边形的误差约为 5 ÷ n²。边数 n 为多少时，误差约为 <b>${e}</b>？`),
+      hint: t(`solve 5 ÷ n² = ${e}, so n² = 5 ÷ ${e}.`, `解 5 ÷ n² = ${e}，也就是 n² = 5 ÷ ${e}。`),
+      explain: t(`n² = 5 ÷ ${e} = ${Math.round(5 / e)}, so n = ${n}.`, `n² = 5 ÷ ${e} = ${Math.round(5 / e)}，所以 n = ${n}。`) };
+  },
+  () => {
+    const opts = [t("They use random numbers, so every run is different", "它们用随机数，每次结果都不同"), t("The computer makes rounding mistakes", "电脑有舍入误差"), t("The formula changes during the race", "比赛中公式变了"), t("They are only drawn approximately", "只是画得不精确")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t("Why do the lines for dots and needles <b>wiggle</b> and change every time you run the race?", "为什么投点和投针的线会<b>抖动</b>，而且每次比赛都不一样？"),
+      hint: t("run the race twice and watch which lines stay exactly the same.", "跑两次比赛，看哪些线完全不变。"),
+      explain: t("Dots and needles depend on chance. The polygons and the series are fixed calculations, so their lines never change.", "投点和投针依赖随机，多边形和级数是确定的计算，所以它们的线从不改变。") };
+  },
+  () => {
+    const opts = [t("Fractions (an infinite series)", "分数（无穷级数）"), t("Polygons", "多边形"), t("Random dots", "随机投点"), t("Needles", "投针")];
+    return { type: "mc", answer: opts[0], options: opts,
+      q: t("Today's record π calculations use a method most like which of our four?", "如今计算 π 的世界纪录，用的方法最像我们四种中的哪一种？"),
+      hint: t("the Chudnovsky formula adds about 14 correct digits with every term.", "Chudnovsky 公式每多一项大约多 14 位准确数字。"),
+      explain: t("Modern records use very fast infinite series such as the Chudnovsky series. The Leibniz series is its slow ancestor.", "现代纪录使用 Chudnovsky 级数这类极快的无穷级数，莱布尼茨级数是它们缓慢的“祖先”。") };
+  },
+];
+
+const QUIZZES = [
+  makeQuiz("quiz-arch", archQs, "nav-arch"),
+  makeQuiz("quiz-mc", mcQs, "nav-mc"),
+  makeQuiz("quiz-bf", bfQs, "nav-bf"),
+  makeQuiz("quiz-lb", lbQs, "nav-lb"),
+  makeQuiz("quiz-rc", rcQs, "nav-rc"),
+];
+
+
+/* =========================================================
+   LANGUAGE SWITCH (English ⇄ 中文)
+   ========================================================= */
+const I18N_STATIC = [
+  ['.toc a[href="#archimedes"] .t', "多边形"], ['.toc a[href="#monte-carlo"] .t', "随机投点"], ['.toc a[href="#buffon"] .t', "投针"],
+  ['.toc a[href="#leibniz"] .t', "分数"], ['.toc a[href="#race"] .t', "比赛"],
+  [".hero .label", "Manim 项目 · B 组"],
+  [".hero h1", '用四种方法<br>捕捉 <span class="pi">π</span><span class="soft">无需测量任何曲线</span>'],
+  [".hero .lede", "π 是直径为 1 的圆的周长。没有尺子能精确测量曲线，于是数学家换了个思路去“捕捉” π：<strong>用多边形夹住它</strong>、<strong>用随机点</strong>、<strong>用落下的针</strong>，以及<strong>用无穷多个分数相加</strong>。先看每段短片，再亲手试一试。"],
+  [".i-caught", "已确定的位数："],
+  [".index a .num", ["01 · 约公元前 250 年", "02 · 20 世纪 40 年代", "03 · 1777 年", "04 · 约 1400 年 / 1674 年"]],
+  [".index a .t", ["用多边形夹住它", "随机投点", "把针扔到地板上", "把分数加起来"]],
+  [".index a .d", ["阿基米德用 96 边形夹逼 π。", "数一数落在圆里的点，π 就出现了。", "布丰在一个概率游戏里找到了 π。", "1 − 1/3 + 1/5 − … 慢慢逼近 π/4。"]],
+  ["#tk-h", "观看前须知"], [".toolkit h2 + p", "视频会用到的四个知识点。"],
+  [".tool .f", ["C = πd", "A = πr²", "P = 部分 ÷ 整体", "sin 30° = ½"]],
+  [".tool p", ["周长等于 π 乘以直径。直径为 1 时，周长就是 π。", "圆的面积。半径为 1 时，面积就是 π。", "对于随机的点，概率就是面积之比。", "30° 和 60° 的正弦与正切，第一段视频会用到。"]],
+
+  ["#archimedes .ch-head .label", "约公元前 250 年 · 叙拉古的阿基米德"],
+  ["#arch-h", "用两个多边形<em>夹住 π</em>"],
+  ["#archimedes .thesis", "圆里面的多边形<em>太短</em>，圆外面的多边形<em>太长</em>，π 一定夹在两者之间。"],
+  ["#archimedes .body", "阿基米德从正六边形开始，不断把边数加倍：12、24、48、96。每加倍一次，夹缝就收窄一些。用 96 边形，他证明了 π 在 3.1408 和 3.1429 之间。"],
+  ["#archimedes .formula", '<span class="label">一句话概括</span><span style="color:var(--blue)">内接</span> &lt; <span style="color:var(--yellow)">π</span> &lt; <span style="color:var(--red)">外切</span>'],
+  ["#archimedes .after", "<b>看完以后：</b>刘徽（公元 263 年）用到 3072 边形得到 3.1416，祖冲之把 π 夹在 3.1415926 和 3.1415927 之间。"],
+  ["#archimedes .video-meta > span:first-child", "配音并带字幕 · 2:34"],
+  ["#archimedes .timeline .nm", ["π 是多少？", "夹逼思想", "π > 3", "π < 3.464", "加倍到 96", "结果", "刘徽与祖冲之"]],
+  ["#archimedes .stage .label", "实验 · 直径 = 1"], ["#archimedes .rail h3", "切割圆"], ["#archimedes .rail h3 + p", "拖动滑块，看两个多边形如何逼近圆。"],
+  [".i-agree", "两个界一致的位数："], [".i-gap", "差距"], ['label[for="arch-n"]', "边数"], ["#arch-zoom + span", "放大边缘"],
+
+  ["#monte-carlo .ch-head .label", "20 世纪 40 年代 · 洛斯阿拉莫斯"],
+  ["#mc-h", "向正方形<em>随机投点</em>"],
+  ["#monte-carlo .thesis", "半径为 1 的圆占据了外面正方形的 <em>π⁄4</em>。随机投点能帮你找到这个比例。"],
+  ["#monte-carlo .body", "在正方形里随便投点，数一数有多少落在圆内，四倍的比例就会趋近 π。它适用于任何形状，但很慢：每多一位数字，要多投一百倍的点。"],
+  ["#monte-carlo .formula", '<span class="label">一句话概括</span><span style="color:var(--yellow)">π</span> ≈ 4 × <span class="frac"><span style="color:var(--green)">圆内点数</span><span>总点数</span></span>'],
+  ["#monte-carlo .after", "<b>看完以后：</b>典型误差约为 1.64 ÷ √n。投 100 个点试几次，看看结果跳得多厉害。"],
+  ["#monte-carlo .video-meta > span:first-child", "配音并带字幕 · 2:18"],
+  ["#monte-carlo .timeline .nm", ["随机能算 π？", "P = π⁄4", "x² + y² ≤ 1", "两千个点", "精度与任意形状", "总结"]],
+  ["#monte-carlo .stage .label", "实验 · 正方形范围 −1 到 1"], ["#monte-carlo .rail h3", "投点"], ["#monte-carlo .rail h3 + p", "黄色数字表示已经和 π 一致。"],
+  ["#monte-carlo .big-cap", "π ≈ 4 × 圆内点数 ÷ 总点数"], ["#monte-carlo .stat .l", ["点数", "圆内", "误差"]],
+  ['label[for="mc-batch"]', "每次投点数"], ["#mc-throw", "投点"], ["#mc-reset", "重置"],
+  ["#monte-carlo .chart-wrap .label", "估计值的变化 · 虚线 = π"],
+
+  ["#buffon .ch-head .label", "1777 年 · 布丰伯爵乔治-路易·勒克莱尔"],
+  ["#bf-h", "把<em>针</em>扔到条纹地板上"],
+  ["#buffon .thesis", "眼前没有圆，可 π 却决定了一根落下的针有多常<em>压到线</em>。"],
+  ["#buffon .body", "地板上画着间距为 d 的平行线，一根长度为 l 的针随机落下。因为针可以指向任何方向，压线的概率是 2l ⁄ (πd)。数一数针数和压线数，把公式反过来，就得到 π。"],
+  ["#buffon .formula", '<span class="label">一句话概括（l = d）</span><span style="color:var(--yellow)">π</span> ≈ <span class="frac"><span>2 × 针数</span><span style="color:var(--red)">压线数</span></span>'],
+  ["#buffon .after", "<b>看完以后：</b>在实验区把针变短。压线变少了，但估计值仍然趋向 π。"],
+  ["#buffon .video-meta > span:first-child", "配音并带字幕 · 2:22"],
+  ["#buffon .timeline .nm", ["布丰的游戏", "y 和 θ", "P = 2⁄π", "反推 π", "一千根针", "拉扎里尼与总结"]],
+  ["#buffon .stage .label", "实验 · 线距 d = 1"], ["#buffon .rail h3", "投针"], ["#buffon .rail h3 + p", "红色的针压到了线。黄色数字表示已经和 π 一致。"],
+  ["#buffon .big-cap", "π ≈ 2l × 针数 ÷ 压线数"], ["#buffon .stat .l", ["针数", "压线数", "误差"]],
+  ['label[for="bf-l"]', "针长 l（会重置计数）"], ['label[for="bf-batch"]', "每次投针数"], ["#bf-drop", "投针"], ["#bf-reset", "重置"],
+  ["#buffon .chart-wrap .label", "估计值的变化 · 虚线 = π"],
+
+  ["#leibniz .ch-head .label", "约 1400 年 马德哈瓦 · 1674 年 莱布尼茨"],
+  ["#lb-h", "把<em>分数</em>永远加下去"],
+  ["#leibniz .thesis", "没有圆，也没有随机，只有奇数：<em>加三分之一，减五分之一</em>……π 就出现了。"],
+  ["#leibniz .body", "每加一项，和就越过 π，再折回来，而且每次摆动都比上一次小。原因是一块面积：曲线 y = 1 ⁄ (1 + x²) 在 0 到 1 之间围成的面积正好是 π⁄4。缺点是慢：误差约为 1 ⁄ n，每多一位数字要多算十倍的项。"],
+  ["#leibniz .formula", '<span class="label">一句话概括</span><span style="color:var(--yellow)">π</span> = 4 × ( 1 − <span class="frac"><span>1</span><span>3</span></span> + <span class="frac"><span>1</span><span>5</span></span> − <span class="frac"><span>1</span><span>7</span></span> + … )'],
+  ["#leibniz .after", "<b>看完以后：</b>在实验区打开“显示平均值”。把相邻两个和取平均，大部分摆动都抵消了。"],
+  ["#leibniz .video-meta > span:first-child", "配音并带字幕 · 3:27"],
+  ["#leibniz .timeline .nm", ["用分数求 π", "来回摆动", "为什么是 π？", "缺点：慢", "加速技巧", "四条路"]],
+  ["#leibniz .stage .label", "实验 · 4 × (1 − 1/3 + 1/5 − …)"], ["#leibniz .rail h3", "把项加起来"], ["#leibniz .rail h3 + p", "黄色数字表示已经和 π 一致。"],
+  [".i-lbcap1", "π ≈ 4 × （前"], [".i-lbcap2", "项之和）"], ["#leibniz .stat .l", ["最后一项", "误差", "平均值"]],
+  ['label[for="lb-n"]', "项数"], ["#lb-add", "加一项"], ["#lb-avg-on + span", "显示平均值"],
+
+  ["#race .ch-head .label", "压轴 · 四种方法同场竞赛"],
+  ["#rc-h", "四种方法，<em>一场比赛</em>"],
+  ["#race .thesis", "给每种方法同样的预算：<em>10,000 步</em>。谁最接近 π？"],
+  ["#race .body", "一步就是多边形多一条边、多投一个点、多投一根针，或级数多算一项。决定胜负的是误差随步数缩小得有多快。下图两个坐标轴都是对数刻度，所以每条规律都变成一条直线，越陡越快。"],
+  ["#race .after", "<b>试一试：</b>多跑几次比赛。绿线和红线（投点和投针）每次都会变，因为它们依赖随机；多边形和级数每次的结果都一样。"],
+  [".law .nm", ["01 · 多边形", "02 · 随机投点", "03 · 投针", "04 · 分数级数"]],
+  [".law .eq", ['误差 ≈ <span class="frac"><span>5</span><span>n²</span></span>', '误差 ≈ <span class="frac"><span>1.6</span><span>√n</span></span>', '误差 ≈ <span class="frac"><span>2.4</span><span>√n</span></span>', '误差 ≈ <span class="frac"><span>1</span><span>n</span></span>']],
+  [".law .st", ["n = 边数", "n = 点数", "n = 针数", "n = 项数"]],
+  ["#race .stage .label", "比赛 · 每一步后的误差（对数刻度）"],
+  [".race-steps h3", "实时排名"], [".race-steps p", "进度条表示已经算对的小数位数。"],
+  [".lane .ln", ["<b>多边形</b> · 内接周长", "<b>随机投点</b> · 4 × 圆内 ÷ 总数", "<b>投针</b> · 2 × 针数 ÷ 压线数", "<b>分数级数</b> · 4 × (1 − 1/3 + …)"]],
+  ['label[for="race-speed"]', "比赛速度"], ["#race-guide + span", "显示随机方法的典型误差"],
+  [".cmp thead th", ["方法", "时间", "数学分支", "一步是", "n 步后的误差", "10,000 步后", "优点", "缺点"]],
+  [".cmp tbody tr:nth-child(1) td", ["多边形", "约公元前 250 年", "几何", "多一条边", "≈ 5 ÷ n²", '<span class="ok">3.1415926</span>', "最快，而且同时给出可靠的上界和下界", "每多一条边都要手算平方根"]],
+  [".cmp tbody tr:nth-child(2) td", ["随机投点", "20 世纪 40 年代", "概率", "多投一个点", "≈ 1.6 ÷ √n", '<span class="ok">3.1</span>（± 0.016）', "适用于任何形状，哪怕没有公式", "最慢：多一位数字要多投 100 倍的点，而且每次结果不同"]],
+  [".cmp tbody tr:nth-child(3) td", ["投针", "1777 年", "几何概率", "多投一根针", "≈ 2.4 ÷ √n", '<span class="ok">3.1</span>（± 0.024）', "人人都能在地板上做的实物实验", "比投点还不稳定，也容易自欺欺人（拉扎里尼）"]],
+  [".cmp tbody tr:nth-child(4) td", ["分数级数", "约 1400 年 / 1674 年", "无穷级数", "多算一项", "≈ 1 ÷ n", '<span class="ok">3.141</span>', "只需要加法和除法", "单独使用非常慢，需要取平均等技巧"]],
+  [".takeaway h3", ["几何赢得比赛", "随机可靠但缓慢", "级数才是真正的做法"]],
+  [".takeaway p", ["多边形的误差按 1 ÷ n² 下降，边数加倍，误差缩小到四分之一。用 10,000 条边，阿基米德的方法就已经有七位小数正确。",
+                   "投点和投针按 1 ÷ √n 改进，多花一百倍的力气才多一位数字。它们的价值在于：同样的思路能测量没有公式的面积和概率。",
+                   "莱布尼茨级数很慢，却打开了通往更快级数的大门。今天创纪录的计算使用 Chudnovsky 级数，每多一项大约多 14 位准确数字。"]],
+
+  [".brand", "捕捉 <b>π</b>"], [".q-num label.sr-only", "你的答案"], [".cmp caption", "四种方法的比较"],
+  [".sheet-side .label", "习题"], [".i-solved", "已答对"], [".i-streak", "连对"],
+  [".q-reveal", "查看答案"], [".q-next", "下一题"], ['.q-num button[type="submit"]', "检查"],
+  [".i-jump", "点击章节可跳转"],
+  [".big-f", "多边形、随机点、针、分数。<br>四条路，同一个 <b>π</b>。"],
+  [".cred", "B 组 · 项目 2<br>视频由 Manim Community 制作<br>所有实验都在你的浏览器中运行"],
+];
+function applyStatic() {
+  for (const [sel, zh] of I18N_STATIC) {
+    document.querySelectorAll(sel).forEach((el, i) => {
+      const z = Array.isArray(zh) ? zh[i] : zh;
+      if (z === undefined) return;
+      if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+      el.innerHTML = I18N.cur === "zh" ? z : el.dataset.en;
+    });
+  }
+}
+function refreshButtons() {
+  $("arch-play").textContent = A.playing ? t("Stop", "停止") : t("Play Archimedes' path", "播放阿基米德的步骤");
+  $("mc-auto").textContent = M.auto ? t("Stop", "停止") : t("Keep throwing", "连续投点");
+  $("bf-auto").textContent = B.auto ? t("Stop", "停止") : t("Keep dropping", "连续投针");
+  $("lb-play").textContent = L.playing ? t("Stop", "停止") : t("Play from 1", "从 1 项开始播放");
+  $("race-go").textContent = R.running ? t("Stop", "停止") : (R.everRan ? t("Run it again", "再跑一次") : t("Start the race", "开始比赛"));
+}
+function setVideos() {
+  document.querySelectorAll("video[data-en]").forEach((v) => {
+    const want = I18N.cur === "zh" ? v.dataset.zh : v.dataset.en;
+    if (v.getAttribute("src") === want) return;
+    v.pause(); v.src = want; v.load();
+  });
+}
+document.querySelectorAll("video[data-en]").forEach((v) => v.addEventListener("error", () => {
+  if (I18N.cur === "zh" && v.getAttribute("src") === v.dataset.zh) {
+    v.src = v.dataset.en; v.load();
+    const meta = v.closest(".video").querySelector(".video-meta > span:first-child");
+    if (meta) meta.textContent = "中文配音版即将上线，目前播放英文版";
+  }
+}));
+function setLang(lang, save = true) {
+  I18N.cur = lang;
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.title = t("Four Ways to Catch π", "捕捉 π 的四种方法");
+  applyStatic(); refreshButtons();
+  const lb = $("langbtn");
+  lb.textContent = lang === "zh" ? "EN" : "中文";
+  lb.setAttribute("aria-label", lang === "zh" ? "Switch to English" : "切换到中文");
+  drawHero(); drawArch(); drawMC(); drawBF(); drawLB(); drawRace();
+  QUIZZES.forEach((q) => q.regen());
+  setVideos();
+  if (save) { try { localStorage.setItem("catch-pi-lang", lang); } catch (e) { /* storage unavailable */ } }
+}
+$("langbtn").addEventListener("click", () => setLang(I18N.cur === "zh" ? "en" : "zh"));
+
+/* ---------- initial state: labs open with example data ---------- */
+$("mc-batch-out").textContent = fmtInt(mcBatchVal());
+$("bf-batch-out").textContent = fmtInt(bfBatchVal());
+setN(6);
+for (let i = 0; i < 6; i++) mcAdd(50);
+for (let i = 0; i < 6; i++) bfAdd(25);
+drawMC(); drawBF(); setLB(1); raceInstant();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { drawHero(); drawArch(); drawMC(); drawBF(); drawLB(); drawRace(); });
+
+try { if (localStorage.getItem("catch-pi-lang") === "zh") setLang("zh", false); } catch (e) { /* storage unavailable */ }
+
+let rt;
+window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { drawHero(); drawArch(); drawMC(); drawBF(); drawLB(); drawRace(); }, 120); });
+})();
+</script>
+</body>
+</html>
